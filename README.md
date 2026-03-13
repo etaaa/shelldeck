@@ -1,15 +1,39 @@
-# shelldeck
+<h3 align="center">shelldeck</h3>
 
-A multi-terminal dashboard for managing concurrent terminal sessions across different project workspaces. Built with Electron, React, and xterm.js.
+<p align="center">
+  Multi-terminal dashboard for managing concurrent shell sessions by project.<br>
+  Built for running multiple coding agents side by side.
+</p>
 
-shelldeck lets you organize terminals by project. Each project maps to a local folder, and every terminal you open under that project starts in the correct directory. Switching between terminals preserves output, so you never lose context.
+<p align="center">
+  <a href="https://github.com/etaaa/shelldeck/actions/workflows/ci.yml"><img src="https://github.com/etaaa/shelldeck/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/etaaa/shelldeck/blob/main/LICENSE"><img src="https://img.shields.io/github/license/etaaa/shelldeck" alt="License" /></a>
+  <!-- <a href="https://github.com/etaaa/shelldeck/releases"><img src="https://img.shields.io/github/v/release/etaaa/shelldeck?include_prereleases" alt="Release" /></a> -->
+</p>
+
+---
+
+Running CLI-based coding agents (Claude Code, Codex, Aider, etc.) across multiple projects means juggling a lot of terminal windows. shelldeck gives you a single dashboard where each project gets its own group of terminals, all starting in the right directory. Switch between agents without losing output, restart crashed sessions in one click, and see system resource usage at a glance.
+
+It works just as well for general terminal workflows, but the multi-agent use case is what motivated it.
+
+## Features
+
+- **Project-based organization:** group terminals by project folder
+- **Persistent layout:** projects and terminal sessions survive app restarts
+- **Output preservation:** switch between terminals without losing scrollback
+- **Drag-and-drop:** reorder projects in the sidebar
+- **Terminal search:** find text in scrollback with Cmd/Ctrl+F
+- **Keyboard shortcuts:** new terminal, switch sessions, close, all from the keyboard
+- **System monitoring:** CPU and memory usage in the status bar
+- **Cross-platform:** macOS, Linux, Windows
 
 ## Getting started
 
 You need Node.js 20+ installed.
 
 ```bash
-git clone https://github.com/your-username/shelldeck.git
+git clone https://github.com/etaaa/shelldeck.git
 cd shelldeck
 npm install
 npm run dev
@@ -23,9 +47,9 @@ The `postinstall` script automatically compiles `node-pty` native bindings for y
 2. Hover over a project and click **+** to open a new terminal. The shell starts in that project's directory.
 3. Click terminal entries in the sidebar to switch between sessions. Output is preserved in the background.
 4. Double-click a terminal name in the sidebar to rename it.
-5. Use the header buttons to restart or kill individual terminals, or hit **STOP ALL** in the status bar to terminate everything.
+5. Use the restart button in the header or **STOP ALL** in the status bar to manage running terminals.
 
-Projects persist across restarts. Terminal sessions do not (they are ephemeral by design).
+Projects and terminal session metadata persist across restarts.
 
 ## Building for distribution
 
