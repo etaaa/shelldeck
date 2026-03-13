@@ -9,6 +9,7 @@
 
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
+import { existsSync } from 'fs'
 import { PtyManager } from './pty-manager'
 import { SystemMonitor } from './system-monitor'
 import { loadProjects, saveProjects } from './store'
@@ -77,6 +78,9 @@ function registerIpcHandlers(): void {
   // Project persistence.
   ipcMain.handle(IPC.STORE_GET_PROJECTS, () => loadProjects())
   ipcMain.on(IPC.STORE_SAVE_PROJECTS, (_event, { projects }) => saveProjects(projects))
+
+  // Filesystem checks.
+  ipcMain.handle(IPC.FS_PATH_EXISTS, (_event, { path }) => existsSync(path))
 }
 
 // --- App lifecycle ---

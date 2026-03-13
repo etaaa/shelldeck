@@ -49,6 +49,11 @@ const api = {
     ipcRenderer.send(IPC.STORE_SAVE_PROJECTS, { projects })
   },
 
+  /** Check if a filesystem path exists. */
+  pathExists: (path: string): Promise<boolean> => {
+    return ipcRenderer.invoke(IPC.FS_PATH_EXISTS, { path })
+  },
+
   // --- Event listeners (main → renderer) ---
 
   /** Listen for PTY data output. */

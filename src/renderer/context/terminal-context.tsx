@@ -128,11 +128,23 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   const projectsRef = useRef(state.projects)
   projectsRef.current = state.projects
 
-  // Load persisted projects on mount.
+  // Load persisted projects on mount, filtering out any whose paths no longer exist.
   useEffect(() => {
-    window.shellDeck.getProjects().then((projects) => {
-      if (projects.length > 0) {
-        dispatch({ type: 'SET_PROJECTS', projects })
+    window.shellDeck.getProjects().then(async (projects) => {
+      if (projects.length === 0) return
+      const checks = await Promise.all(
+        projects.map(async (p) => ({
+          project: p,
+          exists: await window.shellDeck.pathExists(p.path)
+        }))
+      )
+      const valid = checks.filter((c) => c.exists).map((c) => c.project)
+      if (valid.length > 0) {
+        dispatch({ type: 'SET_PROJECTS', projects: valid })
+      }
+      // Persist the cleaned list if any projects were removed.
+      if (valid.length !== projects.length) {
+        window.shellDeck.saveProjects(valid)
       }
     })
   }, [])

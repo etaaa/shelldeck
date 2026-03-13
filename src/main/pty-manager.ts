@@ -34,30 +34,41 @@ export class PtyManager {
   spawn(id: string, cwd: string, cols: number, rows: number): void {
     const shell = getDefaultShell()
 
-    const proc = pty.spawn(shell, [], {
-      name: 'xterm-256color',
-      cols,
-      rows,
-      cwd,
-      env: {
-        ...process.env,
-        TERM: 'xterm-256color',
-        COLORTERM: 'truecolor'
-      } as Record<string, string>
-    })
+    try {
+      const proc = pty.spawn(shell, [], {
+        name: 'xterm-256color',
+        cols,
+        rows,
+        cwd,
+        env: {
+          ...process.env,
+          TERM: 'xterm-256color',
+          COLORTERM: 'truecolor'
+        } as Record<string, string>
+      })
 
-    // Forward PTY output to the renderer.
-    proc.onData((data) => {
-      this.window?.webContents.send(IPC.PTY_DATA, { id, data })
-    })
+      // Forward PTY output to the renderer.
+      proc.onData((data) => {
+        this.window?.webContents.send(IPC.PTY_DATA, { id, data })
+      })
 
-    // Notify the renderer when the PTY exits.
-    proc.onExit(({ exitCode }) => {
-      this.window?.webContents.send(IPC.PTY_EXIT, { id, exitCode })
-      this.ptys.delete(id)
-    })
+      // Notify the renderer when the PTY exits.
+      proc.onExit(({ exitCode }) => {
+        this.window?.webContents.send(IPC.PTY_EXIT, { id, exitCode })
+        this.ptys.delete(id)
+      })
 
-    this.ptys.set(id, proc)
+      this.ptys.set(id, proc)
+    } catch (err) {
+      // Spawn failed (e.g. invalid cwd). Write the error into the terminal
+      // and immediately signal exit so the UI updates.
+      const message = err instanceof Error ? err.message : String(err)
+      this.window?.webContents.send(IPC.PTY_DATA, {
+        id,
+        data: `\r\nFailed to spawn shell: ${message}\r\n`
+      })
+      this.window?.webContents.send(IPC.PTY_EXIT, { id, exitCode: 1 })
+    }
   }
 
   /** Write data (keystrokes) to a specific PTY. */
