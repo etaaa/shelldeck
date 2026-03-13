@@ -40,7 +40,10 @@ function createWindow(): BrowserWindow {
     minWidth: 900,
     minHeight: 600,
     titleBarStyle: 'hiddenInset',
-    backgroundColor: '#09090b', // zinc-950
+    backgroundColor: '#00000000',
+    transparent: true,
+    vibrancy: 'sidebar',
+    visualEffectState: 'active',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

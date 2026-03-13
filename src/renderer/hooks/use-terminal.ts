@@ -52,7 +52,7 @@ export function useTerminalManager() {
       fontSize: 13,
       fontFamily: '"SF Mono", "Fira Code", "Cascadia Code", Menlo, monospace',
       theme: {
-        background: '#09090b',
+        background: '#19191d',
         foreground: '#fafafa',
         cursor: '#fafafa',
         selectionBackground: '#27272a',

@@ -44,7 +44,7 @@ export function Workspace({ terminalManager }: WorkspaceProps) {
 
   if (state.sessions.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center bg-background">
         <p className="text-muted-foreground text-sm">
           Add a project and open a terminal to get started.
         </p>
@@ -53,7 +53,7 @@ export function Workspace({ terminalManager }: WorkspaceProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
+    <div className="flex-1 flex flex-col min-w-0 bg-background">
       {/* Header for the active terminal */}
       {activeSession && activeProject && (
         <TerminalHeader

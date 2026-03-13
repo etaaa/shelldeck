@@ -29,11 +29,11 @@ export function Sidebar({ width, terminalManager }: SidebarProps) {
 
   return (
     <aside
-      className="flex flex-col border-r border-border bg-background shrink-0"
+      className="flex flex-col border-r border-border bg-zinc-900/60 backdrop-blur-xl shrink-0"
       style={{ width }}
     >
       {/* Draggable title bar region for macOS */}
-      <div className="h-10 flex items-center px-4 border-b border-border draggable-region">
+      <div className="h-10 flex items-center px-4 border-b border-border/50 draggable-region">
         <span className="text-sm font-semibold text-foreground pl-16">shelldeck</span>
       </div>
 

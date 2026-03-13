@@ -17,20 +17,17 @@
   <img src=".github/screenshot.png" alt="shelldeck screenshot" width="800" />
 </p>
 
-Running CLI-based coding agents (Claude Code, Codex, Aider, etc.) across multiple projects means juggling a lot of terminal windows. shelldeck gives you a single dashboard where each project gets its own group of terminals, all starting in the right directory. Switch between agents without losing output, restart crashed sessions in one click, and see system resource usage at a glance.
+Running CLI-based coding agents (Claude Code, Codex, Gemini CLI, etc.) across multiple projects means juggling a lot of terminal windows. shelldeck gives you a single dashboard where each project gets its own group of terminals, all starting in the right directory. Switch between agents without losing output, restart crashed sessions in one click, and see system resource usage at a glance.
 
 It works just as well for general terminal workflows, but the multi-agent use case is what motivated it.
 
 ## Features
 
-- **Project-based organization:** group terminals by project folder
-- **Persistent layout:** projects and terminal sessions survive app restarts
-- **Output preservation:** switch between terminals without losing scrollback
-- **Drag-and-drop:** reorder projects in the sidebar
-- **Terminal search:** find text in scrollback with Cmd/Ctrl+F
-- **Keyboard shortcuts:** new terminal, switch sessions, close, all from the keyboard
-- **System monitoring:** CPU and memory usage in the status bar
-- **Cross-platform:** macOS, Linux, Windows
+- Group terminals by project folder
+- Persistent layout across restarts
+- Switch terminals without losing output
+- Keyboard shortcuts and terminal search
+- Cross-platform (macOS, Linux, Windows)
 
 ## Getting started
 
