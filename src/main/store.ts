@@ -1,5 +1,5 @@
 /**
- * Store — persists project data to a JSON file in the user's app data directory.
+ * Store — persists app data to JSON files in the user's app data directory.
  * Uses Electron's app.getPath('userData') so it works across platforms.
  */
 
@@ -8,26 +8,55 @@ import { join } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { Project } from '../shared/types'
 
-const STORE_FILE = join(app.getPath('userData'), 'projects.json')
+const DATA_DIR = join(app.getPath('userData'))
+const PROJECTS_FILE = join(DATA_DIR, 'projects.json')
+const SETTINGS_FILE = join(DATA_DIR, 'settings.json')
 
-export function loadProjects(): Project[] {
+function ensureDir(): void {
+  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true })
+}
+
+function readJson<T>(path: string, fallback: T): T {
   try {
-    if (!existsSync(STORE_FILE)) return []
-    const raw = readFileSync(STORE_FILE, 'utf-8')
-    const data = JSON.parse(raw)
-    if (!Array.isArray(data)) return []
-    return data
+    if (!existsSync(path)) return fallback
+    return JSON.parse(readFileSync(path, 'utf-8'))
   } catch {
-    return []
+    return fallback
   }
 }
 
-export function saveProjects(projects: Project[]): void {
+function writeJson(path: string, data: unknown): void {
   try {
-    const dir = app.getPath('userData')
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    writeFileSync(STORE_FILE, JSON.stringify(projects, null, 2), 'utf-8')
+    ensureDir()
+    writeFileSync(path, JSON.stringify(data, null, 2), 'utf-8')
   } catch (err) {
-    console.error('Failed to save projects:', err)
+    console.error(`Failed to write ${path}:`, err)
   }
+}
+
+// --- Projects ---
+
+export function loadProjects(): Project[] {
+  const data = readJson<unknown>(PROJECTS_FILE, [])
+  return Array.isArray(data) ? data : []
+}
+
+export function saveProjects(projects: Project[]): void {
+  writeJson(PROJECTS_FILE, projects)
+}
+
+// --- Settings (window state, sidebar width, etc.) ---
+
+export interface AppSettings {
+  windowBounds?: { x: number; y: number; width: number; height: number }
+  windowIsMaximized?: boolean
+  sidebarWidth?: number
+}
+
+export function loadSettings(): AppSettings {
+  return readJson<AppSettings>(SETTINGS_FILE, {})
+}
+
+export function saveSettings(settings: AppSettings): void {
+  writeJson(SETTINGS_FILE, settings)
 }

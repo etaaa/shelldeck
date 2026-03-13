@@ -54,6 +54,16 @@ const api = {
     return ipcRenderer.invoke(IPC.FS_PATH_EXISTS, { path })
   },
 
+  /** Load persisted settings (sidebar width, etc.). */
+  getSettings: (): Promise<Record<string, unknown>> => {
+    return ipcRenderer.invoke(IPC.STORE_GET_SETTINGS)
+  },
+
+  /** Save a partial settings update. */
+  saveSettings: (settings: Record<string, unknown>) => {
+    ipcRenderer.send(IPC.STORE_SAVE_SETTINGS, settings)
+  },
+
   // --- Event listeners (main → renderer) ---
 
   /** Listen for PTY data output. */

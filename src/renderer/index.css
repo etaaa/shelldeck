@@ -37,6 +37,14 @@
   }
 }
 
+/* macOS frameless window drag region */
+.draggable-region {
+  -webkit-app-region: drag;
+}
+.draggable-region button {
+  -webkit-app-region: no-drag;
+}
+
 /* Ensure xterm.js fills its container */
 .xterm {
   height: 100%;

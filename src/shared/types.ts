@@ -42,5 +42,7 @@ export const IPC = {
   DIALOG_OPEN_FOLDER: 'dialog:open-folder',
   STORE_GET_PROJECTS: 'store:get-projects',
   STORE_SAVE_PROJECTS: 'store:save-projects',
+  STORE_GET_SETTINGS: 'store:get-settings',
+  STORE_SAVE_SETTINGS: 'store:save-settings',
   FS_PATH_EXISTS: 'fs:path-exists'
 } as const

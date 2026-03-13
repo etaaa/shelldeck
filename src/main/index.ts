@@ -5,6 +5,7 @@
  * - Create the BrowserWindow
  * - Register IPC handlers for PTY and dialog operations
  * - Start the system monitor
+ * - Persist and restore window state
  */
 
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
@@ -12,16 +13,22 @@ import { join } from 'path'
 import { existsSync } from 'fs'
 import { PtyManager } from './pty-manager'
 import { SystemMonitor } from './system-monitor'
-import { loadProjects, saveProjects } from './store'
+import { loadProjects, saveProjects, loadSettings, saveSettings, AppSettings } from './store'
 import { IPC } from '../shared/types'
 
 const ptyManager = new PtyManager()
 const systemMonitor = new SystemMonitor()
+let settings: AppSettings = {}
 
 function createWindow(): BrowserWindow {
+  settings = loadSettings()
+  const bounds = settings.windowBounds
+
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: bounds?.width ?? 1280,
+    height: bounds?.height ?? 800,
+    x: bounds?.x,
+    y: bounds?.y,
     minWidth: 900,
     minHeight: 600,
     titleBarStyle: 'hiddenInset',
@@ -33,6 +40,26 @@ function createWindow(): BrowserWindow {
       sandbox: false // Required for node-pty preload bridge
     }
   })
+
+  if (settings.windowIsMaximized) {
+    win.maximize()
+  }
+
+  // Save window state on move, resize, and maximize/unmaximize.
+  const saveWindowState = () => {
+    if (win.isDestroyed()) return
+    const isMaximized = win.isMaximized()
+    settings.windowIsMaximized = isMaximized
+    if (!isMaximized) {
+      settings.windowBounds = win.getBounds()
+    }
+    saveSettings(settings)
+  }
+
+  win.on('resize', saveWindowState)
+  win.on('move', saveWindowState)
+  win.on('maximize', saveWindowState)
+  win.on('unmaximize', saveWindowState)
 
   // In dev, load the Vite dev server. In prod, load the built HTML.
   if (process.env.ELECTRON_RENDERER_URL) {
@@ -78,6 +105,13 @@ function registerIpcHandlers(): void {
   // Project persistence.
   ipcMain.handle(IPC.STORE_GET_PROJECTS, () => loadProjects())
   ipcMain.on(IPC.STORE_SAVE_PROJECTS, (_event, { projects }) => saveProjects(projects))
+
+  // Settings persistence (sidebar width, etc.).
+  ipcMain.handle(IPC.STORE_GET_SETTINGS, () => loadSettings())
+  ipcMain.on(IPC.STORE_SAVE_SETTINGS, (_event, incoming) => {
+    settings = { ...settings, ...incoming }
+    saveSettings(settings)
+  })
 
   // Filesystem checks.
   ipcMain.handle(IPC.FS_PATH_EXISTS, (_event, { path }) => existsSync(path))

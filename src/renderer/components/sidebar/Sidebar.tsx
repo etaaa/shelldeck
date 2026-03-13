@@ -1,6 +1,7 @@
 /**
  * Sidebar — left panel containing the project list and terminal navigation.
  * Acts as the primary navigation for switching between terminal sessions.
+ * Width is controlled by the parent via props (for drag-resize support).
  */
 
 import { ProjectList } from './ProjectList'
@@ -10,10 +11,11 @@ import { Button } from '@/components/ui/button'
 import { FolderPlus } from 'lucide-react'
 
 interface SidebarProps {
+  width: number
   terminalManager: ReturnType<typeof useTerminalManager>
 }
 
-export function Sidebar({ terminalManager }: SidebarProps) {
+export function Sidebar({ width, terminalManager }: SidebarProps) {
   const { state, addProject } = useTerminalContext()
 
   const handleAddProject = async () => {
@@ -26,7 +28,10 @@ export function Sidebar({ terminalManager }: SidebarProps) {
   }
 
   return (
-    <aside className="flex flex-col w-64 min-w-[256px] border-r border-border bg-background">
+    <aside
+      className="flex flex-col border-r border-border bg-background shrink-0"
+      style={{ width }}
+    >
       {/* Draggable title bar region for macOS */}
       <div className="h-10 flex items-center px-4 border-b border-border draggable-region">
         <span className="text-sm font-semibold text-foreground pl-16">ShellDeck</span>
