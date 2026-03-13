@@ -8,7 +8,6 @@
 import { BrowserWindow } from 'electron'
 import * as pty from 'node-pty'
 import { IPC } from '../shared/types'
-import os from 'os'
 
 /** Returns the default shell for the current platform. */
 function getDefaultShell(): string {

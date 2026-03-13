@@ -14,11 +14,10 @@ import { Button } from '@/components/ui/button'
 
 interface TerminalListProps {
   sessions: TerminalSession[]
-  projectPath: string
   terminalManager: ReturnType<typeof useTerminalManager>
 }
 
-export function TerminalList({ sessions, projectPath, terminalManager }: TerminalListProps) {
+export function TerminalList({ sessions, terminalManager }: TerminalListProps) {
   const { state, setActiveTerminal, removeSession, renameSession } = useTerminalContext()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')

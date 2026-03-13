@@ -32,9 +32,7 @@ export function ProjectList({ terminalManager }: ProjectListProps) {
             <div className="flex items-center justify-between px-2 py-1.5 group">
               <div className="flex items-center gap-2 min-w-0">
                 <Folder className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="text-xs font-medium text-foreground truncate">
-                  {project.name}
-                </span>
+                <span className="text-xs font-medium text-foreground truncate">{project.name}</span>
               </div>
               <div className="flex items-center gap-0.5">
                 <Button
@@ -59,11 +57,7 @@ export function ProjectList({ terminalManager }: ProjectListProps) {
             </div>
 
             {/* Terminal sessions for this project */}
-            <TerminalList
-              sessions={sessions}
-              projectPath={project.path}
-              terminalManager={terminalManager}
-            />
+            <TerminalList sessions={sessions} terminalManager={terminalManager} />
           </div>
         )
       })}

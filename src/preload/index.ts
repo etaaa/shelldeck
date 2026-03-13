@@ -74,9 +74,14 @@ const api = {
 
   /** Listen for system stats updates. */
   onSystemStats: (
-    callback: (stats: { cpuUsage: number; memoryUsage: number; memoryUsedGB: number; memoryTotalGB: number }) => void
+    callback: (stats: {
+      cpuUsage: number
+      memoryUsage: number
+      memoryUsedGB: number
+      memoryTotalGB: number
+    }) => void
   ) => {
-    const listener = (_event: Electron.IpcRendererEvent, stats: any) => {
+    const listener = (_event: Electron.IpcRendererEvent, stats: Parameters<typeof callback>[0]) => {
       callback(stats)
     }
     ipcRenderer.on(IPC.SYSTEM_STATS, listener)
