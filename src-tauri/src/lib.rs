@@ -15,6 +15,7 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(SystemMonitor::new())
         .manage(pty::PtyState::default())
         .invoke_handler(tauri::generate_handler![
