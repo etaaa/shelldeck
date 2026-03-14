@@ -1,20 +1,20 @@
 /**
  * useTerminalManager — manages the xterm.js Terminal instances and their
- * connection to the PTY backend via tauri-pty.
+ * connection to the PTY backend via the PTY backend.
  *
  * Keeps a persistent map of Terminal instances (ref-based, survives re-renders).
  * Terminals are created once and never destroyed until explicitly removed,
  * ensuring output is preserved when switching between sessions.
  */
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useMemo } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { SearchAddon } from '@xterm/addon-search'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { useTerminalContext } from '@/context/terminal-context'
 import { spawnPty, writePty, resizePty, killPty, removePtyEntry } from '@/lib/api'
-import type { IPty } from 'tauri-pty'
+import type { PtyHandle } from '@/lib/api'
 
 interface TerminalEntry {
   terminal: Terminal
@@ -24,21 +24,33 @@ interface TerminalEntry {
 
 export function useTerminalManager() {
   const terminalsRef = useRef(new Map<string, TerminalEntry>())
-  const { markSessionDead } = useTerminalContext()
   const pendingAttachRef = useRef(new Map<string, HTMLElement>())
+
+  // Track the active PTY per session to ignore stale exit events after restart.
+  const activePtyRef = useRef(new Map<string, PtyHandle>())
+
+  const { markSessionDead } = useTerminalContext()
   const markSessionDeadRef = useRef(markSessionDead)
   markSessionDeadRef.current = markSessionDead
 
-  /** Wire PTY output and exit events to a terminal instance. */
-  const wirePty = (pty: IPty, terminal: Terminal, sessionId: string) => {
+  /** Connect a PTY's output and exit events to an xterm instance. */
+  const wirePty = useCallback((pty: PtyHandle, terminal: Terminal, sessionId: string) => {
+    activePtyRef.current.set(sessionId, pty)
+
     pty.onData((data) => {
+      // Ignore data from a replaced PTY.
+      if (activePtyRef.current.get(sessionId) !== pty) return
       terminal.write(new Uint8Array(data))
     })
+
     pty.onExit(() => {
+      // Ignore exit from a stale PTY (already replaced by a restart).
+      if (activePtyRef.current.get(sessionId) !== pty) return
+      activePtyRef.current.delete(sessionId)
       removePtyEntry(sessionId)
       markSessionDeadRef.current(sessionId)
     })
-  }
+  }, [])
 
   /**
    * Create a new xterm.js Terminal instance and spawn the backend PTY.
@@ -82,7 +94,7 @@ export function useTerminalManager() {
 
     terminalsRef.current.set(sessionId, { terminal, fitAddon, searchAddon })
 
-    // Spawn PTY via tauri-pty (use default 80x24 until attached & fitted).
+    // Spawn PTY via the PTY backend (use default 80x24 until attached & fitted).
     const pty = spawnPty(sessionId, cwd, 80, 24)
     wirePty(pty, terminal, sessionId)
 
@@ -93,7 +105,10 @@ export function useTerminalManager() {
 
     // Sync resize from xterm to PTY.
     terminal.onResize((e) => {
-      resizePty(sessionId, e.cols, e.rows)
+      // Guard against 0-dimension resizes (e.g. fit() on a hidden terminal).
+      if (e.cols > 0 && e.rows > 0) {
+        resizePty(sessionId, e.cols, e.rows)
+      }
     })
 
     // If a TerminalView already requested attachment before we existed, fulfill it now.
@@ -101,15 +116,18 @@ export function useTerminalManager() {
     if (pendingContainer) {
       pendingAttachRef.current.delete(sessionId)
       terminal.open(pendingContainer)
+      // Fit only if the container is visible (hidden containers have 0 dimensions).
       requestAnimationFrame(() => {
-        fitAddon.fit()
+        if (pendingContainer.offsetWidth > 0 && pendingContainer.offsetHeight > 0) {
+          fitAddon.fit()
+        }
       })
     }
-  }, [])
+  }, [wirePty])
 
   /**
    * Attach an xterm.js Terminal to a DOM container element.
-   * Called when the terminal view mounts or becomes visible.
+   * Called once when the terminal view mounts.
    */
   const attachTerminal = useCallback((sessionId: string, container: HTMLElement) => {
     const entry = terminalsRef.current.get(sessionId)
@@ -126,21 +144,33 @@ export function useTerminalManager() {
       terminal.open(container)
     }
 
-    // Fit to container (resize event will propagate to PTY via onResize handler).
+    // Fit to container only if visible (hidden containers have 0 dimensions).
     requestAnimationFrame(() => {
-      fitAddon.fit()
+      if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+        fitAddon.fit()
+      }
     })
   }, [])
 
-  /** Refit a terminal after its container resizes. */
+  /** Refit a terminal to its container. Only safe to call when the terminal is visible. */
   const fitTerminal = useCallback((sessionId: string) => {
     const entry = terminalsRef.current.get(sessionId)
     if (!entry) return
+    // Guard: don't fit if the terminal has no DOM element or the container is hidden.
+    const el = entry.terminal.element
+    if (!el || el.offsetWidth === 0 || el.offsetHeight === 0) return
     entry.fitAddon.fit()
+  }, [])
+
+  /** Focus the xterm terminal so it captures keystrokes. */
+  const focusTerminal = useCallback((sessionId: string) => {
+    const entry = terminalsRef.current.get(sessionId)
+    entry?.terminal.focus()
   }, [])
 
   /** Dispose an xterm.js instance and kill the backend PTY. */
   const destroyTerminal = useCallback((sessionId: string) => {
+    activePtyRef.current.delete(sessionId)
     pendingAttachRef.current.delete(sessionId)
     const entry = terminalsRef.current.get(sessionId)
     if (entry) {
@@ -160,13 +190,15 @@ export function useTerminalManager() {
         return
       }
 
+      // Mark old PTY as stale so its exit event is ignored.
+      activePtyRef.current.delete(sessionId)
       killPty(sessionId)
       entry.terminal.clear()
 
       const pty = spawnPty(sessionId, cwd, entry.terminal.cols, entry.terminal.rows)
       wirePty(pty, entry.terminal, sessionId)
     },
-    [createTerminal]
+    [createTerminal, wirePty]
   )
 
   /** Search forward in the terminal scrollback. Returns true if a match was found. */
@@ -195,15 +227,32 @@ export function useTerminalManager() {
     entry?.terminal.clear()
   }, [])
 
-  return {
-    createTerminal,
-    attachTerminal,
-    fitTerminal,
-    destroyTerminal,
-    restartTerminal,
-    searchTerminal,
-    searchTerminalPrevious,
-    clearSearch,
-    clearTerminalScreen
-  }
+  // Memoize the returned object so consumers get a stable reference.
+  // All callbacks are useCallback with stable deps, so this never recomputes.
+  return useMemo(
+    () => ({
+      createTerminal,
+      attachTerminal,
+      fitTerminal,
+      focusTerminal,
+      destroyTerminal,
+      restartTerminal,
+      searchTerminal,
+      searchTerminalPrevious,
+      clearSearch,
+      clearTerminalScreen
+    }),
+    [
+      createTerminal,
+      attachTerminal,
+      fitTerminal,
+      focusTerminal,
+      destroyTerminal,
+      restartTerminal,
+      searchTerminal,
+      searchTerminalPrevious,
+      clearSearch,
+      clearTerminalScreen
+    ]
+  )
 }

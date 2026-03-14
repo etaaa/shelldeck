@@ -2599,8 +2599,6 @@ dependencies = [
  "libc",
  "log",
  "nix 0.28.0",
- "serde",
- "serde_derive",
  "serial2",
  "shared_library",
  "shell-words",
@@ -3327,6 +3325,7 @@ checksum = "dc6fe69c597f9c37bfeeeeeb33da3530379845f10be461a66d16d03eca2ded77"
 name = "shelldeck"
 version = "0.1.0"
 dependencies = [
+ "portable-pty",
  "serde",
  "serde_json",
  "sysinfo",
@@ -3335,8 +3334,8 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-fs",
  "tauri-plugin-os",
- "tauri-plugin-pty",
  "tauri-plugin-shell",
+ "tokio",
 ]
 
 [[package]]
@@ -3856,19 +3855,6 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.18",
-]
-
-[[package]]
-name = "tauri-plugin-pty"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5da8233d3c7b3581ff7da274d32b9145396da9d68bd16cedbbcb9a6908438be6"
-dependencies = [
- "portable-pty",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
 ]
 
 [[package]]

@@ -22,32 +22,36 @@ export function TerminalView({ sessionId, isVisible, terminalManager }: Terminal
   const containerRef = useRef<HTMLDivElement>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
-  // Attach the xterm terminal to this container on mount.
+  // Use a ref for terminalManager so effects don't re-run when it changes.
+  const managerRef = useRef(terminalManager)
+  managerRef.current = terminalManager
+
+  // Attach the xterm terminal to this container on mount (once).
   useEffect(() => {
     if (!containerRef.current) return
-    terminalManager.attachTerminal(sessionId, containerRef.current)
-  }, [sessionId, terminalManager])
+    managerRef.current.attachTerminal(sessionId, containerRef.current)
+  }, [sessionId])
 
-  // Refit when this terminal becomes visible (container dimensions may have changed).
+  // Refit and focus when this terminal becomes visible.
   useEffect(() => {
-    if (isVisible) {
-      const timeout = setTimeout(() => {
-        terminalManager.fitTerminal(sessionId)
-      }, 50)
-      return () => clearTimeout(timeout)
-    }
-  }, [isVisible, sessionId, terminalManager])
+    if (!isVisible) return
+    const timeout = setTimeout(() => {
+      managerRef.current.fitTerminal(sessionId)
+      managerRef.current.focusTerminal(sessionId)
+    }, 50)
+    return () => clearTimeout(timeout)
+  }, [isVisible, sessionId])
 
   // Refit on window resize.
   useEffect(() => {
     const handleResize = () => {
       if (isVisible) {
-        terminalManager.fitTerminal(sessionId)
+        managerRef.current.fitTerminal(sessionId)
       }
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [isVisible, sessionId, terminalManager])
+  }, [isVisible, sessionId])
 
   // Right-click context menu.
   useEffect(() => {
@@ -70,12 +74,12 @@ export function TerminalView({ sessionId, isVisible, terminalManager }: Terminal
   }, [contextMenu])
 
   const handleClear = () => {
-    terminalManager.clearTerminalScreen(sessionId)
+    managerRef.current.clearTerminalScreen(sessionId)
     setContextMenu(null)
   }
 
   return (
-    <div ref={containerRef} className="h-full w-full relative">
+    <div ref={containerRef} className="h-full w-full relative p-3" style={{ backgroundColor: '#19191d' }}>
       {contextMenu && (
         <div
           className="fixed z-50 min-w-[120px] rounded-md border border-border bg-card py-1 shadow-lg"
