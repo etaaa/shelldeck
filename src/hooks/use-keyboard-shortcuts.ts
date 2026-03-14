@@ -10,7 +10,7 @@
  */
 
 import { useEffect } from 'react'
-import { useTerminalContext } from '../context/terminal-context'
+import { useTerminalContext } from '@/context/terminal-context'
 import { useTerminalManager } from './use-terminal'
 
 export function useKeyboardShortcuts(terminalManager: ReturnType<typeof useTerminalManager>) {

@@ -5,7 +5,7 @@
  * The xterm instance itself is managed by useTerminalManager (not local state),
  * so it persists across show/hide cycles.
  *
- * Right-click shows a custom context menu (replaces Electron's native menu).
+ * Right-click shows a custom context menu.
  */
 
 import { useRef, useEffect, useState } from 'react'
@@ -78,7 +78,7 @@ export function TerminalView({ sessionId, isVisible, terminalManager }: Terminal
     <div ref={containerRef} className="h-full w-full relative">
       {contextMenu && (
         <div
-          className="fixed z-50 min-w-[120px] rounded-md border border-border bg-zinc-900 py-1 shadow-lg"
+          className="fixed z-50 min-w-[120px] rounded-md border border-border bg-card py-1 shadow-lg"
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
           <button

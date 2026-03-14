@@ -29,10 +29,7 @@ export function Sidebar({ width, terminalManager }: SidebarProps) {
   }
 
   return (
-    <aside
-      className="flex flex-col border-r border-border bg-zinc-900 shrink-0"
-      style={{ width }}
-    >
+    <aside className="flex flex-col border-r border-border bg-zinc-900 shrink-0" style={{ width }}>
       {/* Spacer for macOS traffic lights */}
       <div className="h-12 border-b border-border/50" />
 

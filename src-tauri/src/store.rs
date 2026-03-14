@@ -3,15 +3,10 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
-fn data_dir(app: &AppHandle) -> PathBuf {
-    app.path().app_data_dir().expect("failed to get app data dir")
-}
-
-fn ensure_dir(app: &AppHandle) {
-    let dir = data_dir(app);
-    if !dir.exists() {
-        fs::create_dir_all(&dir).ok();
-    }
+fn store_path(app: &AppHandle, filename: &str) -> PathBuf {
+    let dir = app.path().app_data_dir().expect("failed to get app data dir");
+    fs::create_dir_all(&dir).ok();
+    dir.join(filename)
 }
 
 fn read_json(path: &PathBuf) -> Value {
@@ -27,61 +22,43 @@ fn write_json(path: &PathBuf, value: &Value) {
     }
 }
 
+fn get_json(app: &AppHandle, filename: &str, default: Value) -> Value {
+    let val = read_json(&store_path(app, filename));
+    if val.is_null() { default } else { val }
+}
+
+fn save_json(app: &AppHandle, filename: &str, value: &Value) {
+    write_json(&store_path(app, filename), value);
+}
+
 #[tauri::command]
 pub fn get_projects(app: AppHandle) -> Value {
-    ensure_dir(&app);
-    let path = data_dir(&app).join("projects.json");
-    let val = read_json(&path);
-    if val.is_null() {
-        Value::Array(vec![])
-    } else {
-        val
-    }
+    get_json(&app, "projects.json", Value::Array(vec![]))
 }
 
 #[tauri::command]
 pub fn save_projects(app: AppHandle, projects: Value) {
-    ensure_dir(&app);
-    let path = data_dir(&app).join("projects.json");
-    write_json(&path, &projects);
+    save_json(&app, "projects.json", &projects);
 }
 
 #[tauri::command]
 pub fn get_sessions(app: AppHandle) -> Value {
-    ensure_dir(&app);
-    let path = data_dir(&app).join("sessions.json");
-    let val = read_json(&path);
-    if val.is_null() {
-        Value::Array(vec![])
-    } else {
-        val
-    }
+    get_json(&app, "sessions.json", Value::Array(vec![]))
 }
 
 #[tauri::command]
 pub fn save_sessions(app: AppHandle, sessions: Value) {
-    ensure_dir(&app);
-    let path = data_dir(&app).join("sessions.json");
-    write_json(&path, &sessions);
+    save_json(&app, "sessions.json", &sessions);
 }
 
 #[tauri::command]
 pub fn get_settings(app: AppHandle) -> Value {
-    ensure_dir(&app);
-    let path = data_dir(&app).join("settings.json");
-    let val = read_json(&path);
-    if val.is_null() {
-        Value::Object(serde_json::Map::new())
-    } else {
-        val
-    }
+    get_json(&app, "settings.json", Value::Object(serde_json::Map::new()))
 }
 
 #[tauri::command]
 pub fn save_settings(app: AppHandle, settings: Value) {
-    ensure_dir(&app);
-    let path = data_dir(&app).join("settings.json");
-    // Merge with existing settings.
+    let path = store_path(&app, "settings.json");
     let mut existing = match read_json(&path) {
         Value::Object(map) => map,
         _ => serde_json::Map::new(),

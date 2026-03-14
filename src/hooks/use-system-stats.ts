@@ -3,8 +3,8 @@
  */
 
 import { useState, useEffect } from 'react'
-import { SystemStats } from '../../shared/types'
-import { getSystemStats } from '../lib/api'
+import { SystemStats } from '@/types'
+import { getSystemStats } from '@/lib/api'
 
 const defaultStats: SystemStats = {
   cpuUsage: 0,
@@ -22,7 +22,16 @@ export function useSystemStats(): SystemStats {
     const poll = async () => {
       try {
         const s = await getSystemStats()
-        if (active) setStats(s)
+        if (active) {
+          setStats((prev) =>
+            prev.cpuUsage === s.cpuUsage &&
+            prev.memoryUsage === s.memoryUsage &&
+            prev.memoryUsedGB === s.memoryUsedGB &&
+            prev.memoryTotalGB === s.memoryTotalGB
+              ? prev
+              : s
+          )
+        }
       } catch {
         // ignore
       }

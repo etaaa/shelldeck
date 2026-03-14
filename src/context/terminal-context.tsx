@@ -15,14 +15,8 @@ import React, {
   useRef,
   ReactNode
 } from 'react'
-import { Project, TerminalSession } from '../../shared/types'
-import {
-  getProjects,
-  saveProjects,
-  getSessions,
-  saveSessions,
-  pathExists
-} from '../lib/api'
+import { Project, TerminalSession } from '@/types'
+import { getProjects, saveProjects, getSessions, saveSessions, pathExists } from '@/lib/api'
 
 // --- State shape ---
 

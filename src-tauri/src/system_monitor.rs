@@ -7,7 +7,9 @@ use std::sync::Mutex;
 pub struct SystemStats {
     pub cpu_usage: f32,
     pub memory_usage: f32,
+    #[serde(rename = "memoryUsedGB")]
     pub memory_used_gb: f32,
+    #[serde(rename = "memoryTotalGB")]
     pub memory_total_gb: f32,
 }
 
@@ -17,8 +19,9 @@ pub struct SystemMonitor {
 
 impl SystemMonitor {
     pub fn new() -> Self {
-        let mut sys = System::new_all();
-        sys.refresh_all();
+        let mut sys = System::new();
+        sys.refresh_cpu_usage();
+        sys.refresh_memory();
         Self {
             sys: Mutex::new(sys),
         }

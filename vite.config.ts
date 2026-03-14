@@ -8,12 +8,12 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src/renderer')
+      '@': resolve(__dirname, 'src')
     }
   },
-  root: 'src/renderer',
+  root: 'src',
   build: {
-    outDir: '../../dist',
+    outDir: '../dist',
     emptyOutDir: true
   },
   clearScreen: false,

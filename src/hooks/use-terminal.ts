@@ -12,8 +12,9 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { SearchAddon } from '@xterm/addon-search'
 import { WebLinksAddon } from '@xterm/addon-web-links'
-import { useTerminalContext } from '../context/terminal-context'
-import { spawnPty, writePty, resizePty, killPty } from '../lib/api'
+import { useTerminalContext } from '@/context/terminal-context'
+import { spawnPty, writePty, resizePty, killPty, removePtyEntry } from '@/lib/api'
+import type { IPty } from 'tauri-pty'
 
 interface TerminalEntry {
   terminal: Terminal
@@ -27,6 +28,17 @@ export function useTerminalManager() {
   const pendingAttachRef = useRef(new Map<string, HTMLElement>())
   const markSessionDeadRef = useRef(markSessionDead)
   markSessionDeadRef.current = markSessionDead
+
+  /** Wire PTY output and exit events to a terminal instance. */
+  const wirePty = (pty: IPty, terminal: Terminal, sessionId: string) => {
+    pty.onData((data) => {
+      terminal.write(new Uint8Array(data))
+    })
+    pty.onExit(() => {
+      removePtyEntry(sessionId)
+      markSessionDeadRef.current(sessionId)
+    })
+  }
 
   /**
    * Create a new xterm.js Terminal instance and spawn the backend PTY.
@@ -72,16 +84,7 @@ export function useTerminalManager() {
 
     // Spawn PTY via tauri-pty (use default 80x24 until attached & fitted).
     const pty = spawnPty(sessionId, cwd, 80, 24)
-
-    // Connect PTY output to terminal display.
-    pty.onData((data) => {
-      terminal.write(new Uint8Array(data))
-    })
-
-    // Handle PTY exit.
-    pty.onExit(() => {
-      markSessionDeadRef.current(sessionId)
-    })
+    wirePty(pty, terminal, sessionId)
 
     // Forward keystrokes from xterm to PTY.
     terminal.onData((data) => {
@@ -157,20 +160,11 @@ export function useTerminalManager() {
         return
       }
 
-      // Kill old PTY.
       killPty(sessionId)
       entry.terminal.clear()
 
-      // Spawn new PTY and wire it up.
       const pty = spawnPty(sessionId, cwd, entry.terminal.cols, entry.terminal.rows)
-
-      pty.onData((data) => {
-        entry.terminal.write(new Uint8Array(data))
-      })
-
-      pty.onExit(() => {
-        markSessionDeadRef.current(sessionId)
-      })
+      wirePty(pty, entry.terminal, sessionId)
     },
     [createTerminal]
   )

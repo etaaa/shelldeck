@@ -7,7 +7,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTerminalContext } from '@/context/terminal-context'
 import { useTerminalManager } from '@/hooks/use-terminal'
-import { TerminalSession } from '../../../shared/types'
+import { TerminalSession } from '@/types'
 import { cn } from '@/lib/utils'
 import { Terminal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'

@@ -1,5 +1,5 @@
 /**
- * Tauri API bridge — replaces the Electron preload `window.shellDeck` API.
+ * Tauri API bridge — centralizes all backend communication.
  *
  * PTY operations use `tauri-pty` (direct JS calls).
  * Store, dialog, stats, and fs use Tauri `invoke()` commands.
@@ -9,7 +9,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
 import { spawn, type IPty } from 'tauri-pty'
 import { platform } from '@tauri-apps/plugin-os'
-import type { Project, TerminalSession, SystemStats } from '../../shared/types'
+import type { Project, TerminalSession, SystemStats } from '@/types'
 
 // --- PTY Management ---
 
@@ -19,12 +19,7 @@ function getShell(): string {
   return platform() === 'windows' ? 'powershell.exe' : '/bin/zsh'
 }
 
-export function spawnPty(
-  id: string,
-  cwd: string,
-  cols: number,
-  rows: number
-): IPty {
+export function spawnPty(id: string, cwd: string, cols: number, rows: number): IPty {
   const pty = spawn(getShell(), [], {
     cols,
     rows,
@@ -58,8 +53,8 @@ export function killAllPtys(): void {
   }
 }
 
-export function getPtyInstance(id: string): IPty | undefined {
-  return ptyInstances.get(id)
+export function removePtyEntry(id: string): void {
+  ptyInstances.delete(id)
 }
 
 // --- Dialog ---

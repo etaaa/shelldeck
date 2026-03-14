@@ -9,9 +9,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/renderer/*"]
+      "@/*": ["src/*"]
     },
     "skipLibCheck": true
   },
-  "include": ["src/renderer/**/*", "src/shared/**/*", "vite.config.ts"]
+  "include": ["src/**/*", "vite.config.ts"]
 }
