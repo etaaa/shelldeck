@@ -69,7 +69,7 @@ export function Workspace({ terminalManager }: WorkspaceProps) {
 
       {/* Terminal views — all rendered, only active is visible.
          This preserves xterm.js output when switching sessions. */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         {state.sessions.map((session) => (
           <div
             key={session.id}

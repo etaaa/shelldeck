@@ -8,6 +8,7 @@ import { useCallback, useRef } from 'react'
 const DEFAULT_WIDTH = 256
 const MIN_WIDTH = 180
 const MAX_WIDTH = 480
+const MAX_WIDTH_RATIO = 0.4
 
 interface ResizeHandleProps {
   sidebarWidth: number
@@ -27,7 +28,8 @@ export function ResizeHandle({ sidebarWidth, onResize, onResizeEnd }: ResizeHand
 
       const onMouseMove = (ev: MouseEvent) => {
         const delta = ev.clientX - startX
-        const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta))
+        const maxAllowed = Math.min(MAX_WIDTH, window.innerWidth * MAX_WIDTH_RATIO)
+        const newWidth = Math.min(maxAllowed, Math.max(MIN_WIDTH, startWidth + delta))
         onResize(newWidth)
       }
 

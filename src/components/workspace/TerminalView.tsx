@@ -42,15 +42,15 @@ export function TerminalView({ sessionId, isVisible, terminalManager }: Terminal
     return () => clearTimeout(timeout)
   }, [isVisible, sessionId])
 
-  // Refit on window resize.
+  // Refit when the container size changes (window resize, sidebar drag, etc.).
   useEffect(() => {
-    const handleResize = () => {
-      if (isVisible) {
-        managerRef.current.fitTerminal(sessionId)
-      }
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    const el = containerRef.current
+    if (!el || !isVisible) return
+    const observer = new ResizeObserver(() => {
+      managerRef.current.fitTerminal(sessionId)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [isVisible, sessionId])
 
   // Right-click context menu.

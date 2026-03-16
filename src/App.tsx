@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { Sidebar } from '@/components/sidebar/Sidebar'
 import { ResizeHandle } from '@/components/sidebar/ResizeHandle'
 import { Workspace } from '@/components/workspace/Workspace'
@@ -28,6 +29,13 @@ export function App() {
 
   useKeyboardShortcuts(terminalManager)
   useAutoUpdate()
+
+  // Show the window after the first paint. It starts hidden
+  // (visible:false in tauri.conf.json) so window-state restoration
+  // and the initial render happen off-screen.
+  useEffect(() => {
+    getCurrentWindow().show().catch(console.error)
+  }, [])
 
   // Sync sidebar width from settings on load.
   useEffect(() => {
