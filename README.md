@@ -30,7 +30,17 @@ It works just as well for general terminal workflows, but the multi-agent use ca
 - Keyboard shortcuts and in-terminal search
 - Cross-platform (macOS, Linux, Windows)
 
-## Getting started
+## Download
+
+| Platform | Link |
+|----------|------|
+| macOS (Apple Silicon) | [shelldeck_0.1.0_aarch64.dmg](https://github.com/etaaa/shelldeck/releases/latest/download/shelldeck_0.1.0_aarch64.dmg) |
+| macOS (Intel) | [shelldeck_0.1.0_x64.dmg](https://github.com/etaaa/shelldeck/releases/latest/download/shelldeck_0.1.0_x64.dmg) |
+| Windows | [shelldeck_0.1.0_x64-setup.exe](https://github.com/etaaa/shelldeck/releases/latest/download/shelldeck_0.1.0_x64-setup.exe) |
+| Linux (Debian/Ubuntu) | [shelldeck_0.1.0_amd64.deb](https://github.com/etaaa/shelldeck/releases/latest/download/shelldeck_0.1.0_amd64.deb) |
+| Linux (AppImage) | [shelldeck_0.1.0_amd64.AppImage](https://github.com/etaaa/shelldeck/releases/latest/download/shelldeck_0.1.0_amd64.AppImage) |
+
+## Building from source
 
 Requires Node.js 20+ and Rust.
 
