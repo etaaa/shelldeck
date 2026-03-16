@@ -9,6 +9,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTerminalContext } from '@/context/terminal-context'
 import { useTerminalManager } from '@/context/terminal-manager'
+import { getHomeDir } from '@/lib/api'
 import { TerminalHeader } from './TerminalHeader'
 import { TerminalView } from './TerminalView'
 import { SearchBar } from './SearchBar'
@@ -19,7 +20,7 @@ export function Workspace() {
   const terminalManager = useTerminalManager()
   const [searchOpen, setSearchOpen] = useState(false)
   const activeSession = state.sessions.find((s) => s.id === state.activeTerminalId)
-  const activeWorkspace = activeSession
+  const activeWorkspace = activeSession?.workspaceId
     ? state.workspaces.find((w) => w.id === activeSession.workspaceId)
     : null
 
@@ -46,10 +47,17 @@ export function Workspace() {
     if (state.activeTerminalId && state.activeTerminalId !== prevActiveId.current) {
       const session = state.sessions.find((s) => s.id === state.activeTerminalId)
       if (session && !session.isRunning) {
-        const workspace = state.workspaces.find((w) => w.id === session.workspaceId)
-        if (workspace) {
-          reviveSession(session.id)
-          terminalManager.restartTerminal(session.id, workspace.path)
+        if (session.workspaceId) {
+          const workspace = state.workspaces.find((w) => w.id === session.workspaceId)
+          if (workspace) {
+            reviveSession(session.id)
+            terminalManager.restartTerminal(session.id, workspace.path)
+          }
+        } else {
+          getHomeDir().then((home) => {
+            reviveSession(session.id)
+            terminalManager.restartTerminal(session.id, home)
+          })
         }
       }
     }
@@ -62,8 +70,8 @@ export function Workspace() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-background">
-      {activeSession && activeWorkspace && (
-        <TerminalHeader session={activeSession} workspacePath={activeWorkspace.path} />
+      {activeSession && (
+        <TerminalHeader session={activeSession} workspacePath={activeWorkspace?.path ?? null} />
       )}
 
       {searchOpen && state.activeTerminalId && (

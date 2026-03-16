@@ -5,22 +5,24 @@
 
 import { useTerminalContext } from '@/context/terminal-context'
 import { useTerminalManager } from '@/context/terminal-manager'
+import { getHomeDir } from '@/lib/api'
 import type { TerminalSession } from '@/types'
 import { cn } from '@/lib/utils'
 import { RotateCcw } from 'lucide-react'
 
 interface TerminalHeaderProps {
   session: TerminalSession
-  workspacePath: string
+  workspacePath: string | null
 }
 
 export function TerminalHeader({ session, workspacePath }: TerminalHeaderProps) {
   const { reviveSession } = useTerminalContext()
   const terminalManager = useTerminalManager()
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
+    const cwd = workspacePath ?? (await getHomeDir())
     reviveSession(session.id)
-    terminalManager.restartTerminal(session.id, workspacePath)
+    terminalManager.restartTerminal(session.id, cwd)
   }
 
   return (

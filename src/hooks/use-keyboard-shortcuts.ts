@@ -2,7 +2,8 @@
  * useKeyboardShortcuts — registers global keyboard shortcuts for terminal management.
  *
  * Shortcuts (Cmd on macOS, Ctrl on other platforms):
- *   Mod+T          — New terminal in the first workspace (or active workspace)
+ *   Mod+T          — New terminal in active/first workspace (or quick terminal if none)
+ *   Mod+Shift+T    — New quick terminal
  *   Mod+W          — Kill active terminal
  *   Mod+Shift+[    — Switch to previous terminal
  *   Mod+Shift+]    — Switch to next terminal
@@ -12,9 +13,11 @@
 import { useEffect } from 'react'
 import { useTerminalContext } from '@/context/terminal-context'
 import { useTerminalManager } from '@/context/terminal-manager'
+import { getHomeDir } from '@/lib/api'
 
 export function useKeyboardShortcuts() {
-  const { state, createSession, removeSession, setActiveTerminal } = useTerminalContext()
+  const { state, createSession, createQuickSession, removeSession, setActiveTerminal } =
+    useTerminalContext()
   const terminalManager = useTerminalManager()
 
   useEffect(() => {
@@ -23,16 +26,33 @@ export function useKeyboardShortcuts() {
 
       if (!mod) return
 
+      // Cmd+Shift+T — new quick terminal.
+      if (e.key === 't' && e.shiftKey) {
+        e.preventDefault()
+        getHomeDir().then((home) => {
+          const sessionId = createQuickSession()
+          terminalManager.createTerminal(sessionId, home)
+        })
+        return
+      }
+
       // Cmd+T — new terminal in the active session's workspace, or the first workspace.
+      // Falls back to a quick terminal if no workspaces exist.
       if (e.key === 't' && !e.shiftKey) {
         e.preventDefault()
         const activeSession = state.sessions.find((s) => s.id === state.activeTerminalId)
-        const workspace = activeSession
+        const workspace = activeSession?.workspaceId
           ? state.workspaces.find((w) => w.id === activeSession.workspaceId)
           : state.workspaces[0]
-        if (!workspace) return
-        const sessionId = createSession(workspace.id)
-        terminalManager.createTerminal(sessionId, workspace.path)
+        if (workspace) {
+          const sessionId = createSession(workspace.id)
+          terminalManager.createTerminal(sessionId, workspace.path)
+        } else {
+          getHomeDir().then((home) => {
+            const sessionId = createQuickSession()
+            terminalManager.createTerminal(sessionId, home)
+          })
+        }
         return
       }
 
@@ -81,6 +101,7 @@ export function useKeyboardShortcuts() {
     state.activeTerminalId,
     state.workspaces,
     createSession,
+    createQuickSession,
     removeSession,
     setActiveTerminal,
     terminalManager

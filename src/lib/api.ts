@@ -168,3 +168,10 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 export async function pathExists(path: string): Promise<boolean> {
   return await invoke<boolean>('path_exists', { path })
 }
+
+// --- Home directory ---
+
+export async function getHomeDir(): Promise<string> {
+  const { homeDir } = await import('@tauri-apps/api/path')
+  return await homeDir()
+}

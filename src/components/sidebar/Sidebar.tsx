@@ -6,10 +6,12 @@
  */
 
 import { WorkspaceList } from './WorkspaceList'
+import { TerminalList } from './TerminalList'
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar'
 import { useTerminalContext } from '@/context/terminal-context'
+import { useTerminalManager } from '@/context/terminal-manager'
 import { Plus, Settings } from 'lucide-react'
-import { openFolderDialog } from '@/lib/api'
+import { openFolderDialog, getHomeDir } from '@/lib/api'
 import type { SettingsCategory } from '@/types'
 
 interface SidebarProps {
@@ -29,7 +31,8 @@ export function Sidebar({
   onCloseSettings,
   onSelectSettingsCategory
 }: SidebarProps) {
-  const { state, addWorkspace } = useTerminalContext()
+  const { state, addWorkspace, createQuickSession } = useTerminalContext()
+  const terminalManager = useTerminalManager()
 
   const handleAddWorkspace = async () => {
     const folderPath = await openFolderDialog()
@@ -38,6 +41,14 @@ export function Sidebar({
     const name = folderPath.split('/').pop() || folderPath
     addWorkspace(name, folderPath)
   }
+
+  const handleNewQuickTerminal = async () => {
+    const home = await getHomeDir()
+    const sessionId = createQuickSession()
+    terminalManager.createTerminal(sessionId, home)
+  }
+
+  const quickSessions = state.sessions.filter((s) => s.workspaceId === null)
 
   return (
     <aside className="flex flex-col border-r border-border bg-card shrink-0" style={{ width }}>
@@ -91,12 +102,29 @@ export function Sidebar({
 
           {/* Workspace list with terminal sessions */}
           <div className="flex-1 overflow-y-auto px-2 pb-2">
-            {state.workspaces.length === 0 ? (
+            {state.workspaces.length === 0 && quickSessions.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center mt-12 px-4">
                 No workspaces yet
               </p>
             ) : (
-              <WorkspaceList />
+              <>
+                <WorkspaceList />
+
+                {/* Quick Terminals */}
+                <div className="flex items-center justify-between px-1 pt-3 pb-1">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Quick Terminals
+                  </span>
+                  <button
+                    className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    onClick={handleNewQuickTerminal}
+                    title="New Quick Terminal"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <TerminalList sessions={quickSessions} />
+              </>
             )}
           </div>
 

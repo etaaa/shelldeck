@@ -164,6 +164,7 @@ interface TerminalContextValue {
   removeWorkspace: (workspaceId: string) => void
   reorderWorkspaces: (fromIndex: number, toIndex: number) => void
   createSession: (workspaceId: string) => string
+  createQuickSession: () => string
   removeSession: (sessionId: string) => void
   setActiveTerminal: (sessionId: string | null) => void
   markSessionDead: (sessionId: string) => void
@@ -184,10 +185,6 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   // Load persisted workspaces and sessions on mount.
   useEffect(() => {
     getWorkspaces().then(async (workspaces) => {
-      if (workspaces.length === 0) {
-        sessionsLoaded.current = true
-        return
-      }
       const checks = await Promise.all(
         workspaces.map(async (w) => ({
           workspace: w,
@@ -206,7 +203,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
       const validIds = new Set(valid.map((w) => w.id))
       const savedSessions = await getSessions()
       const validSessions = savedSessions
-        .filter((s) => validIds.has(s.workspaceId))
+        .filter((s) => s.workspaceId === null || validIds.has(s.workspaceId))
         .map((s) => ({ ...s, isRunning: false }))
       if (validSessions.length > 0) {
         dispatch({ type: 'SET_SESSIONS', sessions: validSessions })
@@ -259,6 +256,18 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     const session: TerminalSession = {
       id: `term-${Date.now()}-${sessionCounter}`,
       workspaceId,
+      name: `Terminal ${sessionCounter}`,
+      isRunning: true
+    }
+    dispatch({ type: 'ADD_SESSION', session })
+    return session.id
+  }, [])
+
+  const createQuickSession = useCallback((): string => {
+    sessionCounter++
+    const session: TerminalSession = {
+      id: `term-${Date.now()}-${sessionCounter}`,
+      workspaceId: null,
       name: `Terminal ${sessionCounter}`,
       isRunning: true
     }
@@ -325,6 +334,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         removeWorkspace,
         reorderWorkspaces,
         createSession,
+        createQuickSession,
         removeSession,
         setActiveTerminal,
         markSessionDead,

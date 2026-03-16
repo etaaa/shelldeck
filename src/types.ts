@@ -12,7 +12,7 @@ export interface Workspace {
 /** The state of a terminal as tracked by the renderer. */
 export interface TerminalSession {
   id: string
-  workspaceId: string
+  workspaceId: string | null
   name: string
   isRunning: boolean
 }
