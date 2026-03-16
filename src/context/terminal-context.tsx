@@ -73,17 +73,16 @@ function reducer(state: TerminalState, action: Action): TerminalState {
     }
 
     case 'REMOVE_PROJECT': {
-      const sessionIds = state.sessions
+      const remaining = state.sessions.filter((s) => s.projectId !== action.projectId)
+      const removedIds = state.sessions
         .filter((s) => s.projectId === action.projectId)
         .map((s) => s.id)
+      const lostActive = state.activeTerminalId && removedIds.includes(state.activeTerminalId)
       return {
         ...state,
         projects: state.projects.filter((p) => p.id !== action.projectId),
-        sessions: state.sessions.filter((s) => s.projectId !== action.projectId),
-        activeTerminalId:
-          state.activeTerminalId && sessionIds.includes(state.activeTerminalId)
-            ? null
-            : state.activeTerminalId
+        sessions: remaining,
+        activeTerminalId: lostActive ? (remaining[0]?.id ?? null) : state.activeTerminalId
       }
     }
 
@@ -97,13 +96,17 @@ function reducer(state: TerminalState, action: Action): TerminalState {
         activeTerminalId: action.session.id
       }
 
-    case 'REMOVE_SESSION':
-      return {
-        ...state,
-        sessions: state.sessions.filter((s) => s.id !== action.sessionId),
-        activeTerminalId:
-          state.activeTerminalId === action.sessionId ? null : state.activeTerminalId
+    case 'REMOVE_SESSION': {
+      const remaining = state.sessions.filter((s) => s.id !== action.sessionId)
+      let nextActive = state.activeTerminalId
+      if (state.activeTerminalId === action.sessionId) {
+        // Switch to a sibling session, preferring the one before the removed one.
+        const removedIndex = state.sessions.findIndex((s) => s.id === action.sessionId)
+        const sibling = remaining[Math.min(removedIndex, remaining.length - 1)]
+        nextActive = sibling?.id ?? null
       }
+      return { ...state, sessions: remaining, activeTerminalId: nextActive }
+    }
 
     case 'SET_ACTIVE_TERMINAL':
       return { ...state, activeTerminalId: action.sessionId }

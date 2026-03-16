@@ -8,35 +8,45 @@ use std::{
     },
 };
 
-use portable_pty::{native_pty_system, Child, ChildKiller, CommandBuilder, PtyPair, PtySize};
+use portable_pty::{native_pty_system, CommandBuilder, PtyPair, PtySize};
 use tokio::sync::{Mutex, RwLock};
 
+/// Opaque handle returned to the frontend to identify a PTY session.
 type PtyHandler = u32;
+
+/// Read buffer size for PTY output.
+const READ_BUF_SIZE: usize = 4096;
 
 #[derive(Default)]
 pub struct PtyState {
-    session_id: AtomicU32,
+    next_id: AtomicU32,
     sessions: RwLock<BTreeMap<PtyHandler, Arc<Session>>>,
 }
 
 struct Session {
+    /// The PTY pair (master + slave). Used for resize operations.
     pair: Mutex<PtyPair>,
-    _child: Mutex<Box<dyn Child + Send + Sync>>,
-    child_killer: Mutex<Box<dyn ChildKiller + Send + Sync>>,
+    /// Cloned killer handle for terminating the child process.
+    killer: Mutex<Box<dyn portable_pty::ChildKiller + Send + Sync>>,
+    /// Writer end of the PTY master for sending input.
     writer: Mutex<Box<dyn std::io::Write + Send>>,
-    reader: Mutex<Box<dyn Read + Send>>,
-    /// Separate mutex for blocking wait, so it doesn't conflict with async locks.
-    child_waiter: std::sync::Mutex<Option<Box<dyn Child + Send + Sync>>>,
+    /// Reader end of the PTY master for receiving output.
+    /// Uses std::sync::Mutex because reads are blocking and run inside spawn_blocking.
+    reader: std::sync::Mutex<Box<dyn Read + Send>>,
+    /// The child process handle, used for waiting on exit status.
+    /// Uses std::sync::Mutex because wait() blocks and runs inside spawn_blocking.
+    /// Wrapped in Option because it is taken once wait() completes.
+    child: std::sync::Mutex<Option<Box<dyn portable_pty::Child + Send + Sync>>>,
 }
 
 fn get_session(
     sessions: &BTreeMap<PtyHandler, Arc<Session>>,
-    pid: PtyHandler,
+    id: PtyHandler,
 ) -> Result<Arc<Session>, String> {
     sessions
-        .get(&pid)
+        .get(&id)
         .cloned()
-        .ok_or_else(|| "Unavailable pid".to_string())
+        .ok_or_else(|| format!("No PTY session with id {id}"))
 }
 
 #[tauri::command]
@@ -58,61 +68,43 @@ pub async fn pty_spawn(
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Failed to open PTY: {e}"))?;
 
-    let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
-    let reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
+    let writer = pair
+        .master
+        .take_writer()
+        .map_err(|e| format!("Failed to get PTY writer: {e}"))?;
+    let reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| format!("Failed to get PTY reader: {e}"))?;
 
     let mut cmd = CommandBuilder::new(file);
     cmd.args(args);
     if let Some(cwd) = cwd {
         cmd.cwd(OsString::from(cwd));
     }
-    for (k, v) in env.iter() {
+    for (k, v) in &env {
         cmd.env(OsString::from(k), OsString::from(v));
     }
 
-    let child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
-    let child_killer = child.clone_killer();
-    let child_waiter = child.clone_killer();
-    let handler = state.session_id.fetch_add(1, Ordering::Relaxed);
+    let child = pair
+        .slave
+        .spawn_command(cmd)
+        .map_err(|e| format!("Failed to spawn command: {e}"))?;
+    let killer = child.clone_killer();
+    let id = state.next_id.fetch_add(1, Ordering::Relaxed);
 
-    // We need a second Child handle for wait(). clone_killer gives us a ChildKiller,
-    // but we need Child for wait(). We'll store the original child for waiting.
     let session = Arc::new(Session {
         pair: Mutex::new(pair),
-        _child: Mutex::new(Box::new(NullChild)),
-        child_killer: Mutex::new(child_killer),
+        killer: Mutex::new(killer),
         writer: Mutex::new(writer),
-        reader: Mutex::new(reader),
-        child_waiter: std::sync::Mutex::new(Some(child)),
+        reader: std::sync::Mutex::new(reader),
+        child: std::sync::Mutex::new(Some(child)),
     });
-    let _ = child_waiter; // ChildKiller not needed separately
-    state.sessions.write().await.insert(handler, session);
-    Ok(handler)
-}
 
-/// Placeholder since we moved the real child to child_waiter.
-#[derive(Debug)]
-struct NullChild;
-impl Child for NullChild {
-    fn try_wait(&mut self) -> std::io::Result<Option<portable_pty::ExitStatus>> {
-        Ok(None)
-    }
-    fn wait(&mut self) -> std::io::Result<portable_pty::ExitStatus> {
-        Err(std::io::Error::new(std::io::ErrorKind::Other, "use child_waiter"))
-    }
-    fn process_id(&self) -> Option<u32> {
-        None
-    }
-}
-impl ChildKiller for NullChild {
-    fn kill(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-    fn clone_killer(&self) -> Box<dyn ChildKiller + Send + Sync> {
-        Box::new(NullChild)
-    }
+    state.sessions.write().await.insert(id, session);
+    Ok(id)
 }
 
 #[tauri::command]
@@ -124,8 +116,9 @@ pub async fn pty_write(
     let session = get_session(&*state.sessions.read().await, pid)?;
     let mut writer = session.writer.lock().await;
     use std::io::Write;
-    writer.write_all(data.as_bytes()).map_err(|e| e.to_string())?;
-    Ok(())
+    writer
+        .write_all(data.as_bytes())
+        .map_err(|e| format!("Failed to write to PTY: {e}"))
 }
 
 #[tauri::command]
@@ -135,20 +128,24 @@ pub async fn pty_read(
 ) -> Result<Vec<u8>, String> {
     let session = get_session(&*state.sessions.read().await, pid)?;
 
-    // Run blocking read on the blocking thread pool, not on a Tokio worker.
     tokio::task::spawn_blocking(move || {
-        let mut reader = session.reader.blocking_lock();
-        let mut buf = vec![0u8; 4096];
-        let n = reader.read(&mut buf).map_err(|e: std::io::Error| e.to_string())?;
+        let mut reader = session
+            .reader
+            .lock()
+            .map_err(|e| format!("Reader lock poisoned: {e}"))?;
+        let mut buf = vec![0u8; READ_BUF_SIZE];
+        let n = reader
+            .read(&mut buf)
+            .map_err(|e| format!("Failed to read from PTY: {e}"))?;
         if n == 0 {
-            Err::<Vec<u8>, String>("EOF".to_string())
+            Err("EOF".to_string())
         } else {
             buf.truncate(n);
             Ok(buf)
         }
     })
     .await
-    .map_err(|e: tokio::task::JoinError| e.to_string())?
+    .map_err(|e| format!("Read task failed: {e}"))?
 }
 
 #[tauri::command]
@@ -159,19 +156,15 @@ pub async fn pty_resize(
     state: tauri::State<'_, PtyState>,
 ) -> Result<(), String> {
     let session = get_session(&*state.sessions.read().await, pid)?;
-    session
-        .pair
-        .lock()
-        .await
-        .master
+    let pair = session.pair.lock().await;
+    pair.master
         .resize(PtySize {
             rows,
             cols,
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| e.to_string())?;
-    Ok(())
+        .map_err(|e| format!("Failed to resize PTY: {e}"))
 }
 
 #[tauri::command]
@@ -180,13 +173,10 @@ pub async fn pty_kill(
     state: tauri::State<'_, PtyState>,
 ) -> Result<(), String> {
     let session = get_session(&*state.sessions.read().await, pid)?;
-    session
-        .child_killer
-        .lock()
-        .await
+    let mut killer = session.killer.lock().await;
+    killer
         .kill()
-        .map_err(|e| e.to_string())?;
-    Ok(())
+        .map_err(|e| format!("Failed to kill PTY process: {e}"))
 }
 
 #[tauri::command]
@@ -196,16 +186,32 @@ pub async fn pty_exitstatus(
 ) -> Result<u32, String> {
     let session = get_session(&*state.sessions.read().await, pid)?;
 
-    // Run blocking wait on the blocking thread pool, not on a Tokio worker.
     tokio::task::spawn_blocking(move || {
         let mut guard = session
-            .child_waiter
+            .child
             .lock()
-            .map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
-        let child = guard.as_mut().ok_or("Child already consumed")?;
-        let status = child.wait().map_err(|e: std::io::Error| e.to_string())?;
-        Ok::<u32, String>(status.exit_code())
+            .map_err(|e| format!("Child lock poisoned: {e}"))?;
+        let child = guard.as_mut().ok_or("Child process already consumed")?;
+        let status = child
+            .wait()
+            .map_err(|e| format!("Failed to wait for child process: {e}"))?;
+        Ok(status.exit_code())
     })
     .await
-    .map_err(|e: tokio::task::JoinError| e.to_string())?
+    .map_err(|e| format!("Exit status task failed: {e}"))?
+}
+
+/// Remove a finished session from the session map, releasing all resources.
+#[tauri::command]
+pub async fn pty_cleanup(
+    pid: PtyHandler,
+    state: tauri::State<'_, PtyState>,
+) -> Result<(), String> {
+    state
+        .sessions
+        .write()
+        .await
+        .remove(&pid)
+        .ok_or_else(|| format!("No PTY session with id {pid}"))?;
+    Ok(())
 }

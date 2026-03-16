@@ -12,6 +12,7 @@ import { useTerminalManager } from '@/hooks/use-terminal'
 import { TerminalHeader } from './TerminalHeader'
 import { TerminalView } from './TerminalView'
 import { SearchBar } from './SearchBar'
+import { IdleScreen } from './IdleScreen'
 
 interface WorkspaceProps {
   terminalManager: ReturnType<typeof useTerminalManager>
@@ -43,13 +44,7 @@ export function Workspace({ terminalManager }: WorkspaceProps) {
   }, [state.activeTerminalId])
 
   if (state.sessions.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-background">
-        <p className="text-muted-foreground text-sm">
-          Add a project and open a terminal to get started.
-        </p>
-      </div>
-    )
+    return <IdleScreen />
   }
 
   return (
@@ -72,7 +67,8 @@ export function Workspace({ terminalManager }: WorkspaceProps) {
         />
       )}
 
-      {/* Terminal views — all rendered, only active is visible */}
+      {/* Terminal views — all rendered, only active is visible.
+         This preserves xterm.js output when switching sessions. */}
       <div className="flex-1 relative">
         {state.sessions.map((session) => (
           <div

@@ -88,7 +88,7 @@ export function spawnPty(id: string, cwd: string, cols: number, rows: number): P
     }
   })
 
-  // Wait for exit.
+  // Wait for exit and clean up the Rust-side session.
   ready.then(async (pid) => {
     try {
       const exitCode = await invoke<number>('pty_exitstatus', { pid })
@@ -96,6 +96,7 @@ export function spawnPty(id: string, cwd: string, cols: number, rows: number): P
     } catch (e) {
       console.error('Exit status error:', e)
     }
+    invoke('pty_cleanup', { pid }).catch(() => {})
   })
 
   ptyHandles.set(id, handle)
