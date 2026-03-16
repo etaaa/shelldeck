@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- shelldeck logomark: bold geometric chevron + cursor bar -->
+
+  <!-- Chevron mark -->
+  <path
+    d="M 144 148 L 296 256 L 144 364"
+    fill="none"
+    stroke="#e6e1da"
+    stroke-width="56"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Cursor bar -->
+  <line
+    x1="328" y1="364"
+    x2="400" y2="364"
+    stroke="#34d399"
+    stroke-width="56"
+    stroke-linecap="round"
+  />
+</svg>

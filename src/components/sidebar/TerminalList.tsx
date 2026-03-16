@@ -9,7 +9,7 @@ import { useTerminalManager } from '@/context/terminal-manager'
 import { useInlineRename } from '@/hooks/use-inline-rename'
 import type { TerminalSession } from '@/types'
 import { cn } from '@/lib/utils'
-import { Terminal, X, Bell } from 'lucide-react'
+import { Terminal, X } from 'lucide-react'
 
 interface TerminalListProps {
   sessions: TerminalSession[]
@@ -54,23 +54,24 @@ export function TerminalList({ sessions }: TerminalListProps) {
                 className={cn('h-3.5 w-3.5 shrink-0', session.isRunning ? 'text-green-500' : '')}
               />
 
-              {hasBell && <Bell className="h-3 w-3 shrink-0 text-yellow-500" />}
-
               {isEditing ? (
                 <input
                   {...rename.inputProps}
                   className="bg-background border border-border rounded px-2 py-0.5 text-sm text-foreground w-full outline-none"
                 />
               ) : (
-                <span
-                  className="truncate"
-                  onDoubleClick={(e) => {
-                    e.stopPropagation()
-                    rename.start(session.id, session.name)
-                  }}
-                >
-                  {session.name}
-                </span>
+                <>
+                  <span
+                    className="truncate"
+                    onDoubleClick={(e) => {
+                      e.stopPropagation()
+                      rename.start(session.id, session.name)
+                    }}
+                  >
+                    {session.name}
+                  </span>
+                  {hasBell && <span className="h-1.5 w-1.5 rounded-full bg-yellow-500 shrink-0" />}
+                </>
               )}
             </div>
             {!isEditing && (

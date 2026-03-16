@@ -8,7 +8,7 @@
 import { ProjectList } from './ProjectList'
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar'
 import { useTerminalContext } from '@/context/terminal-context'
-import { FolderPlus, Settings } from 'lucide-react'
+import { Plus, Settings } from 'lucide-react'
 import { openFolderDialog } from '@/lib/api'
 import type { SettingsCategory } from '@/types'
 
@@ -44,6 +44,29 @@ export function Sidebar({
       {/* Spacer for macOS traffic lights */}
       <div className="h-12 shrink-0" data-tauri-drag-region />
 
+      {/* Logo + name */}
+      <div className="flex items-center gap-2.5 px-4 pb-4">
+        <svg viewBox="0 0 512 512" className="w-7 h-7 shrink-0" fill="none">
+          <path
+            d="M 144 148 L 296 256 L 144 364"
+            stroke="#e6e1da"
+            strokeWidth="56"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <line
+            x1="328"
+            y1="364"
+            x2="400"
+            y2="364"
+            stroke="#34d399"
+            strokeWidth="56"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="text-base font-semibold text-foreground tracking-tight">shelldeck</span>
+      </div>
+
       {settingsOpen ? (
         <SettingsSidebar
           activeCategory={settingsCategory}
@@ -52,18 +75,19 @@ export function Sidebar({
         />
       ) : (
         <>
-          {/* Add project button */}
-          <div className="px-3 pb-3">
+          {/* Projects heading + add button */}
+          <div className="flex items-center justify-between px-3 pb-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Projects
+            </span>
             <button
-              className="w-full flex items-center justify-center gap-2 px-2.5 py-1.5 text-sm text-muted-foreground rounded-md border border-border hover:bg-accent hover:text-foreground transition-colors"
+              className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               onClick={handleAddProject}
+              title="Add Project"
             >
-              <FolderPlus className="h-4 w-4" />
-              Add Project
+              <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
-
-          <div className="border-b border-border mx-3 mb-2" />
 
           {/* Project list with terminal sessions */}
           <div className="flex-1 overflow-y-auto px-2 pb-2">

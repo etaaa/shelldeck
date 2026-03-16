@@ -1,4 +1,4 @@
-<h3 align="center">shelldeck</h3>
+<h3 align="center"><img src="logo.svg" alt="shelldeck logo" width="28" style="vertical-align: middle;" />&nbsp;&nbsp;shelldeck</h3>
 
 <p align="center">
   A lightweight multi-terminal dashboard for managing concurrent shell sessions by project.<br>

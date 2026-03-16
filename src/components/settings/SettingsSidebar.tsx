@@ -3,8 +3,6 @@
  * Shown in the sidebar area when settings is open.
  */
 
-import { useState, useEffect } from 'react'
-import { getVersion } from '@tauri-apps/api/app'
 import { Bell, ArrowLeft, Terminal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SettingsCategory } from '@/types'
@@ -25,12 +23,6 @@ export function SettingsSidebar({
   onSelectCategory,
   onBack
 }: SettingsSidebarProps) {
-  const [version, setVersion] = useState('')
-
-  useEffect(() => {
-    getVersion().then(setVersion)
-  }, [])
-
   return (
     <div className="flex flex-col h-full">
       {/* Back button */}
@@ -66,8 +58,6 @@ export function SettingsSidebar({
           </button>
         ))}
       </nav>
-
-      {version && <p className="px-4 py-3 text-xs text-muted-foreground/60">v{version}</p>}
     </div>
   )
 }
