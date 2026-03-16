@@ -28,8 +28,10 @@ export function TerminalHeader({ session, projectPath, terminalManager }: Termin
       className="flex items-center justify-between px-4 h-12 border-b border-border bg-card shrink-0"
       data-tauri-drag-region
     >
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-foreground">{session.name}</span>
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-sm font-medium text-foreground truncate">
+          {terminalManager.terminalTitles[session.id] || session.name}
+        </span>
         <span
           className={cn(
             'inline-flex items-center gap-1.5 text-xs',

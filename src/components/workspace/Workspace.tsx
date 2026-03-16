@@ -6,7 +6,7 @@
  * alive so no output is lost when switching sessions.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTerminalContext } from '@/context/terminal-context'
 import { useTerminalManager } from '@/hooks/use-terminal'
 import { TerminalHeader } from './TerminalHeader'
@@ -19,7 +19,7 @@ interface WorkspaceProps {
 }
 
 export function Workspace({ terminalManager }: WorkspaceProps) {
-  const { state } = useTerminalContext()
+  const { state, reviveSession } = useTerminalContext()
   const [searchOpen, setSearchOpen] = useState(false)
   const activeSession = state.sessions.find((s) => s.id === state.activeTerminalId)
   const activeProject = activeSession
@@ -42,6 +42,23 @@ export function Workspace({ terminalManager }: WorkspaceProps) {
   useEffect(() => {
     setSearchOpen(false)
   }, [state.activeTerminalId])
+
+  // Auto-restart dead sessions when they become active (e.g. after
+  // closing a terminal and the reducer selects a sibling).
+  const prevActiveId = useRef(state.activeTerminalId)
+  useEffect(() => {
+    if (state.activeTerminalId && state.activeTerminalId !== prevActiveId.current) {
+      const session = state.sessions.find((s) => s.id === state.activeTerminalId)
+      if (session && !session.isRunning) {
+        const project = state.projects.find((p) => p.id === session.projectId)
+        if (project) {
+          reviveSession(session.id)
+          terminalManager.restartTerminal(session.id, project.path)
+        }
+      }
+    }
+    prevActiveId.current = state.activeTerminalId
+  }, [state.activeTerminalId, state.sessions, state.projects, reviveSession, terminalManager])
 
   if (state.sessions.length === 0) {
     return <IdleScreen />

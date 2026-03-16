@@ -7,7 +7,7 @@
  * ensuring output is preserved when switching between sessions.
  */
 
-import { useRef, useCallback, useMemo } from 'react'
+import { useRef, useCallback, useMemo, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { SearchAddon } from '@xterm/addon-search'
@@ -25,6 +25,10 @@ interface TerminalEntry {
 export function useTerminalManager() {
   const terminalsRef = useRef(new Map<string, TerminalEntry>())
   const pendingAttachRef = useRef(new Map<string, HTMLElement>())
+
+  // Terminal titles reported by the shell (e.g. "zsh", "vim", "node server.js").
+  // Uses state so components re-render when a title changes.
+  const [terminalTitles, setTerminalTitles] = useState<Record<string, string>>({})
 
   // Track the active PTY per session to ignore stale exit events after restart.
   const activePtyRef = useRef(new Map<string, PtyHandle>())
@@ -101,6 +105,11 @@ export function useTerminalManager() {
       terminal.loadAddon(new WebLinksAddon())
 
       terminalsRef.current.set(sessionId, { terminal, fitAddon, searchAddon })
+
+      // Track the shell-reported title (e.g. running process, cwd).
+      terminal.onTitleChange((title) => {
+        setTerminalTitles((prev) => ({ ...prev, [sessionId]: title }))
+      })
 
       // Spawn PTY via the PTY backend (use default 80x24 until attached & fitted).
       const pty = spawnPty(sessionId, cwd, 80, 24)
@@ -199,6 +208,11 @@ export function useTerminalManager() {
       entry.terminal.dispose()
       terminalsRef.current.delete(sessionId)
     }
+    setTerminalTitles((prev) => {
+      const next = { ...prev }
+      delete next[sessionId]
+      return next
+    })
     killPty(sessionId)
   }, [])
 
@@ -262,7 +276,8 @@ export function useTerminalManager() {
       searchTerminal,
       searchTerminalPrevious,
       clearSearch,
-      clearTerminalScreen
+      clearTerminalScreen,
+      terminalTitles
     }),
     [
       createTerminal,
@@ -274,7 +289,8 @@ export function useTerminalManager() {
       searchTerminal,
       searchTerminalPrevious,
       clearSearch,
-      clearTerminalScreen
+      clearTerminalScreen,
+      terminalTitles
     ]
   )
 }

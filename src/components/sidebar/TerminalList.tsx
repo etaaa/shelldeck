@@ -17,8 +17,7 @@ interface TerminalListProps {
 }
 
 export function TerminalList({ sessions, terminalManager }: TerminalListProps) {
-  const { state, setActiveTerminal, removeSession, renameSession, reviveSession } =
-    useTerminalContext()
+  const { state, setActiveTerminal, removeSession, renameSession } = useTerminalContext()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -71,16 +70,7 @@ export function TerminalList({ sessions, terminalManager }: TerminalListProps) {
                 ? 'bg-accent text-foreground'
                 : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
             )}
-            onClick={() => {
-              setActiveTerminal(session.id)
-              if (!session.isRunning) {
-                const project = state.projects.find((p) => p.id === session.projectId)
-                if (project) {
-                  reviveSession(session.id)
-                  terminalManager.restartTerminal(session.id, project.path)
-                }
-              }
-            }}
+            onClick={() => setActiveTerminal(session.id)}
           >
             <div className="flex items-center gap-2 min-w-0">
               <Terminal
