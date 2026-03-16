@@ -19,11 +19,15 @@ import { getSettings, saveSettings } from '@/lib/api'
 export interface AppSettings {
   sidebarWidth: number
   bellNotificationsEnabled: boolean
+  fontSize: number
+  scrollback: number
 }
 
-const defaultSettings: AppSettings = {
+export const defaultSettings: AppSettings = {
   sidebarWidth: 256,
-  bellNotificationsEnabled: true
+  bellNotificationsEnabled: true,
+  fontSize: 13,
+  scrollback: 1000
 }
 
 interface SettingsContextValue {

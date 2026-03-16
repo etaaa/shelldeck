@@ -54,6 +54,7 @@ type Action =
   | { type: 'SET_ACTIVE_TERMINAL'; sessionId: string | null }
   | { type: 'SET_SESSION_RUNNING'; sessionId: string; isRunning: boolean }
   | { type: 'RENAME_SESSION'; sessionId: string; name: string }
+  | { type: 'RENAME_PROJECT'; projectId: string; name: string }
   | { type: 'NOTIFY_BELL'; sessionId: string }
   | { type: 'CLEAR_BELL'; sessionId: string }
 
@@ -127,6 +128,14 @@ function reducer(state: TerminalState, action: Action): TerminalState {
         )
       }
 
+    case 'RENAME_PROJECT':
+      return {
+        ...state,
+        projects: state.projects.map((p) =>
+          p.id === action.projectId ? { ...p, name: action.name } : p
+        )
+      }
+
     case 'NOTIFY_BELL': {
       // Only notify if this session is not currently active.
       if (state.activeTerminalId === action.sessionId) return state
@@ -161,6 +170,7 @@ interface TerminalContextValue {
   setActiveTerminal: (sessionId: string | null) => void
   markSessionDead: (sessionId: string) => void
   renameSession: (sessionId: string, name: string) => void
+  renameProject: (projectId: string, name: string) => void
   /** Mark a restored (dead) session as running again. */
   reviveSession: (sessionId: string) => void
   /** Notify that a terminal emitted a bell character. */
@@ -311,6 +321,13 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     [dispatch]
   )
 
+  const renameProject = useCallback(
+    (projectId: string, name: string) => {
+      dispatch({ type: 'RENAME_PROJECT', projectId, name })
+    },
+    [dispatch]
+  )
+
   const reviveSession = useCallback(
     (sessionId: string) => {
       dispatch({ type: 'SET_SESSION_RUNNING', sessionId, isRunning: true })
@@ -356,6 +373,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         setActiveTerminal,
         markSessionDead,
         renameSession,
+        renameProject,
         reviveSession,
         notifyBell
       }}

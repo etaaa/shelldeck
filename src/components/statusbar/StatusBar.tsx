@@ -38,6 +38,7 @@ export function StatusBar() {
       <button
         className="flex items-center gap-1.5 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 rounded transition-colors"
         onClick={handleStopAll}
+        title="Stop All Terminals"
       >
         <OctagonX className="h-3.5 w-3.5" />
         STOP ALL

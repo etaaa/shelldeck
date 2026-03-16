@@ -25,7 +25,7 @@ export function App() {
   const { settings } = useSettings()
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [settingsCategory, setSettingsCategory] = useState<SettingsCategory>('notifications')
+  const [settingsCategory, setSettingsCategory] = useState<SettingsCategory>('terminal')
 
   useKeyboardShortcuts(terminalManager)
   useAutoUpdate()

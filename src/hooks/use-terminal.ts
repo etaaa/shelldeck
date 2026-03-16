@@ -7,12 +7,13 @@
  * ensuring output is preserved when switching between sessions.
  */
 
-import { useRef, useCallback, useMemo, useState } from 'react'
+import { useRef, useCallback, useMemo, useState, useEffect } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { SearchAddon } from '@xterm/addon-search'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { useTerminalContext } from '@/context/terminal-context'
+import { useSettings } from '@/context/settings-context'
 import { spawnPty, writePty, resizePty, killPty, removePtyEntry } from '@/lib/api'
 import type { PtyHandle } from '@/lib/api'
 
@@ -32,6 +33,10 @@ export function useTerminalManager() {
 
   // Track the active PTY per session to ignore stale exit events after restart.
   const activePtyRef = useRef(new Map<string, PtyHandle>())
+
+  const { settings } = useSettings()
+  const settingsRef = useRef(settings)
+  settingsRef.current = settings
 
   const { markSessionDead, notifyBell } = useTerminalContext()
   const markSessionDeadRef = useRef(markSessionDead)
@@ -71,8 +76,9 @@ export function useTerminalManager() {
     (sessionId: string, cwd: string) => {
       const terminal = new Terminal({
         cursorBlink: true,
-        fontSize: 13,
-        fontFamily: '"SF Mono", "Fira Code", "Cascadia Code", Menlo, monospace',
+        fontSize: settingsRef.current.fontSize,
+        fontFamily: '"SF Mono", Menlo, monospace',
+        scrollback: settingsRef.current.scrollback,
         theme: {
           background: '#212121',
           foreground: '#e6e1da',
@@ -262,6 +268,27 @@ export function useTerminalManager() {
     const entry = terminalsRef.current.get(sessionId)
     entry?.terminal.clear()
   }, [])
+
+  // Apply terminal settings changes to all existing terminals.
+  // Terminals may be hidden (display:none) when settings is open, so we also
+  // schedule a delayed refit to catch them when they become visible again.
+  useEffect(() => {
+    const apply = () => {
+      for (const [, entry] of terminalsRef.current) {
+        entry.terminal.options.fontSize = settings.fontSize
+        entry.terminal.options.scrollback = settings.scrollback
+        entry.terminal.clearTextureAtlas()
+        const el = entry.terminal.element
+        if (el && el.offsetWidth > 0 && el.offsetHeight > 0) {
+          entry.fitAddon.fit()
+        }
+      }
+    }
+    apply()
+    // Retry after a short delay for terminals that were hidden during the first pass.
+    const timeout = setTimeout(apply, 150)
+    return () => clearTimeout(timeout)
+  }, [settings.fontSize, settings.scrollback])
 
   // Memoize the returned object so consumers get a stable reference.
   // All callbacks are useCallback with stable deps, so this never recomputes.

@@ -37,6 +37,7 @@
     overflow: hidden;
     margin: 0;
     -webkit-font-smoothing: antialiased;
+    user-select: none;
   }
 }
 
