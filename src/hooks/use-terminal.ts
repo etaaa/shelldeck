@@ -118,12 +118,16 @@ export function useTerminalManager(): TerminalManager {
       const pty = spawnPty(sessionId, cwd, 80, 24)
       wirePty(pty, terminal, sessionId)
 
-      // Fix for macOS WKWebView: backspace gets routed through IME composition
-      // and arrives as a space. Intercept and write directly to PTY.
+      // Fix for macOS WKWebView: backspace and delete get routed through IME
+      // composition and arrive mangled. Intercept and write directly to PTY.
       terminal.attachCustomKeyEventHandler((event) => {
         if (event.type === 'keydown' && event.key === 'Backspace') {
           if (event.metaKey || event.ctrlKey) return true
           writePty(sessionId, event.altKey ? '\x1b\x7f' : '\x7f')
+          return false
+        }
+        if (event.type === 'keydown' && event.key === 'Delete') {
+          writePty(sessionId, '\x1b[3~')
           return false
         }
         return true
