@@ -19,6 +19,7 @@
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 21%;
+    --ring: 0 0% 50%;
     --radius: 0.5rem;
   }
 }
@@ -29,7 +30,7 @@
   }
   html,
   body {
-    background: hsl(0 0% 13%);
+    background: hsl(var(--background));
     @apply text-foreground;
     font-family:
       -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans',

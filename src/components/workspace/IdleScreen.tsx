@@ -41,9 +41,9 @@ export function IdleScreen() {
           {hints.map((hint) => (
             <div
               key={hint.label}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-zinc-800/30 border border-zinc-700/30"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary/30 border border-border"
             >
-              <hint.icon className="w-4 h-4 text-zinc-500 shrink-0" />
+              <hint.icon className="w-4 h-4 text-muted-foreground shrink-0" />
               <span className="text-sm text-muted-foreground">
                 <span className="text-foreground font-medium">{hint.label}</span> {hint.description}
               </span>

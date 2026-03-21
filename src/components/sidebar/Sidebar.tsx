@@ -60,7 +60,7 @@ export function Sidebar({
         <svg viewBox="0 0 512 512" className="w-7 h-7 shrink-0" fill="none">
           <path
             d="M 144 148 L 296 256 L 144 364"
-            stroke="#e6e1da"
+            stroke="currentColor"
             strokeWidth="56"
             strokeLinecap="round"
             strokeLinejoin="round"
