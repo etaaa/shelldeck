@@ -71,6 +71,7 @@ export function useTerminalManager(): TerminalManager {
     (sessionId: string, cwd: string) => {
       const terminal = new Terminal({
         cursorBlink: true,
+        cursorInactiveStyle: 'block',
         fontSize: settingsRef.current.fontSize,
         fontFamily: '"SF Mono", Menlo, monospace',
         scrollback: settingsRef.current.scrollback,

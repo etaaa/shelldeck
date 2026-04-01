@@ -10,6 +10,7 @@ import { useInlineRename } from '@/hooks/use-inline-rename'
 import type { TerminalSession } from '@/types'
 import { cn } from '@/lib/utils'
 import { X } from 'lucide-react'
+import { Menu } from '@tauri-apps/api/menu'
 
 interface TerminalListProps {
   sessions: TerminalSession[]
@@ -22,14 +23,14 @@ export function TerminalList({ sessions }: TerminalListProps) {
 
   if (sessions.length === 0) return null
 
-  const handleKill = (sessionId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleKill = (sessionId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
     terminalManager.destroyTerminal(sessionId)
     removeSession(sessionId)
   }
 
   return (
-    <div className="ml-6 space-y-0.5 mt-0.5 mb-1">
+    <div className="space-y-0.5 mt-0.5 mb-1">
       {sessions.map((session) => {
         const isActive = state.activeTerminalId === session.id
         const isEditing = rename.editingId === session.id
@@ -39,7 +40,7 @@ export function TerminalList({ sessions }: TerminalListProps) {
           <div
             key={session.id}
             className={cn(
-              'flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group text-sm font-medium transition-colors',
+              'flex items-center justify-between pl-8 pr-2 py-1.5 rounded-md cursor-pointer group text-sm font-medium transition-colors',
               isActive
                 ? 'bg-accent text-foreground'
                 : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
@@ -48,6 +49,17 @@ export function TerminalList({ sessions }: TerminalListProps) {
               if (!(e.target as HTMLElement).closest('button, input')) e.preventDefault()
             }}
             onClick={() => setActiveTerminal(session.id)}
+            onContextMenu={async (e) => {
+              e.preventDefault()
+              const menu = await Menu.new({
+                items: [
+                  { text: 'Rename', action: () => rename.start(session.id, session.name) },
+                  { item: 'Separator' },
+                  { text: 'Close Terminal', action: () => handleKill(session.id) }
+                ]
+              })
+              await menu.popup()
+            }}
           >
             <div className="flex items-center gap-2 min-w-0">
               <span
@@ -84,7 +96,7 @@ export function TerminalList({ sessions }: TerminalListProps) {
               <button
                 className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                 onClick={(e) => handleKill(session.id, e)}
-                title="Kill Terminal"
+                title="Close Terminal"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

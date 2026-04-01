@@ -1,54 +1,77 @@
 /**
  * IdleScreen — shown when no terminal session is active.
- * Displays usage hints for getting started.
+ * Actionable cards to get started quickly.
  */
 
-import { Plus, FolderOpen } from 'lucide-react'
-
-const hints = [
-  { icon: FolderOpen, label: 'Add or select a workspace', description: 'from the sidebar' },
-  { icon: Plus, label: 'Open a terminal', description: 'to start working' }
-]
+import { useTerminalContext } from '@/context/terminal-context'
+import { useTerminalManager } from '@/context/terminal-manager'
+import { openFolderDialog, getHomeDir } from '@/lib/api'
+import { FolderOpen, Terminal } from 'lucide-react'
 
 export function IdleScreen() {
+  const { addWorkspace, createSession } = useTerminalContext()
+  const terminalManager = useTerminalManager()
+
+  const handleAddWorkspace = async () => {
+    const folderPath = await openFolderDialog()
+    if (!folderPath) return
+    const name = folderPath.split('/').pop() || folderPath
+    addWorkspace(name, folderPath)
+  }
+
+  const handleNewTerminal = async () => {
+    const home = await getHomeDir()
+    const sessionId = createSession(null)
+    terminalManager.createTerminal(sessionId, home)
+  }
+
   return (
     <div className="flex-1 flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-6 max-w-sm w-full">
-        {/* Logo mark as subtle visual anchor */}
-        <svg viewBox="0 0 512 512" className="w-12 h-12 opacity-15" fill="none">
-          <path
-            d="M 144 148 L 296 256 L 144 364"
-            stroke="currentColor"
-            strokeWidth="56"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <line
-            x1="328"
-            y1="364"
-            x2="400"
-            y2="364"
-            stroke="currentColor"
-            strokeWidth="56"
-            strokeLinecap="round"
-          />
-        </svg>
+      <div className="flex flex-col items-center gap-8 max-w-xs w-full">
+        <div className="flex flex-col items-center gap-2">
+          <svg viewBox="0 0 512 512" className="w-16 h-16" fill="none">
+            <path
+              d="M 144 148 L 296 256 L 144 364"
+              stroke="currentColor"
+              className="text-foreground"
+              strokeWidth="56"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <line
+              x1="328"
+              y1="364"
+              x2="400"
+              y2="364"
+              stroke="#34d399"
+              strokeWidth="56"
+              strokeLinecap="round"
+            />
+          </svg>
+          <p className="text-sm font-medium text-foreground">shelldeck</p>
+        </div>
 
-        <div className="flex flex-col gap-3 w-full">
-          <p className="text-sm text-muted-foreground text-center mb-1">
-            No active terminal session.
-          </p>
-          {hints.map((hint) => (
-            <div
-              key={hint.label}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary/30 border border-border"
-            >
-              <hint.icon className="w-4 h-4 text-muted-foreground shrink-0" />
-              <span className="text-sm text-muted-foreground">
-                <span className="text-foreground font-medium">{hint.label}</span> {hint.description}
-              </span>
+        <div className="flex flex-col gap-2 w-full">
+          <button
+            className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border text-left hover:bg-accent/50 transition-colors"
+            onClick={handleAddWorkspace}
+          >
+            <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div>
+              <span className="text-sm font-medium text-foreground">Add a workspace</span>
+              <span className="block text-xs text-muted-foreground">Open a project folder</span>
             </div>
-          ))}
+          </button>
+          <button
+            className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border text-left hover:bg-accent/50 transition-colors"
+            onClick={handleNewTerminal}
+          >
+            <Terminal className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div>
+              <span className="text-sm font-medium text-foreground">Quick terminal</span>
+              <span className="block text-xs text-muted-foreground">Open a terminal in ~</span>
+            </div>
+          </button>
         </div>
       </div>
     </div>

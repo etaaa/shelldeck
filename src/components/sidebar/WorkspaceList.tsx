@@ -10,11 +10,11 @@ import { useTerminalManager } from '@/context/terminal-manager'
 import { useInlineRename } from '@/hooks/use-inline-rename'
 import { useDragReorder } from '@/hooks/use-drag-reorder'
 import { TerminalList } from './TerminalList'
-import { ContextMenu, ContextMenuItem, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { Plus, AlertTriangle, ChevronRight } from 'lucide-react'
 import { pathExists } from '@/lib/api'
 import { confirm } from '@tauri-apps/plugin-dialog'
 import { open } from '@tauri-apps/plugin-shell'
+import { Menu } from '@tauri-apps/api/menu'
 
 export function WorkspaceList() {
   const { state, createSession, removeWorkspace, reorderWorkspaces, renameWorkspace } =
@@ -25,15 +25,6 @@ export function WorkspaceList() {
 
   const [invalidWorkspaceIds, setInvalidWorkspaceIds] = useState<Set<string>>(new Set())
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
-  const [contextMenu, setContextMenu] = useState<{
-    x: number
-    y: number
-    workspaceId: string
-  } | null>(null)
-
-  const contextWorkspace = contextMenu
-    ? state.workspaces.find((w) => w.id === contextMenu.workspaceId)
-    : null
 
   const toggleCollapsed = (workspaceId: string) => {
     setCollapsed((prev) => {
@@ -74,8 +65,7 @@ export function WorkspaceList() {
         const isInvalid = invalidWorkspaceIds.has(workspace.id)
         const isCollapsed = collapsed.has(workspace.id)
         const isDragging = drag.dragging === index
-        const showIndicatorBefore =
-          drag.dropTarget === index && drag.dragging !== null && drag.dragging !== index
+        const showIndicatorBefore = drag.dropTarget === index && !drag.isNoOp(drag.dropTarget)
         const isEditing = rename.editingId === workspace.id
 
         return (
@@ -93,9 +83,21 @@ export function WorkspaceList() {
                 e.preventDefault()
                 drag.startDrag(index)
               }}
-              onContextMenu={(e) => {
+              onContextMenu={async (e) => {
                 e.preventDefault()
-                setContextMenu({ x: e.clientX, y: e.clientY, workspaceId: workspace.id })
+                const menu = await Menu.new({
+                  items: [
+                    { text: 'Rename', action: () => rename.start(workspace.id, workspace.name) },
+                    {
+                      text: 'New Terminal',
+                      action: () => handleNewTerminal(workspace.id, workspace.path)
+                    },
+                    { text: 'Open in Finder', action: () => open(workspace.path) },
+                    { item: 'Separator' },
+                    { text: 'Remove', action: () => handleRemove(workspace.id, workspace.name) }
+                  ]
+                })
+                await menu.popup()
               }}
             >
               <div className="flex items-center gap-1.5 min-w-0">
@@ -144,53 +146,12 @@ export function WorkspaceList() {
             {/* Show indicator after the last item if dropping at the end */}
             {drag.dropTarget === state.workspaces.length &&
               index === state.workspaces.length - 1 &&
-              drag.dragging !== null &&
-              drag.dragging !== state.workspaces.length - 1 && (
+              !drag.isNoOp(drag.dropTarget) && (
                 <div className="h-0.5 bg-foreground/30 rounded-full mx-2 mt-0.5" />
               )}
           </div>
         )
       })}
-
-      {/* Context menu */}
-      {contextMenu && contextWorkspace && (
-        <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)}>
-          <ContextMenuItem
-            onClick={() => {
-              rename.start(contextWorkspace.id, contextWorkspace.name)
-              setContextMenu(null)
-            }}
-          >
-            Rename
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              handleNewTerminal(contextWorkspace.id, contextWorkspace.path)
-              setContextMenu(null)
-            }}
-          >
-            New Terminal
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              open(contextWorkspace.path)
-              setContextMenu(null)
-            }}
-          >
-            Open in Finder
-          </ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem
-            destructive
-            onClick={() => {
-              handleRemove(contextWorkspace.id, contextWorkspace.name)
-              setContextMenu(null)
-            }}
-          >
-            Remove
-          </ContextMenuItem>
-        </ContextMenu>
-      )}
     </div>
   )
 }

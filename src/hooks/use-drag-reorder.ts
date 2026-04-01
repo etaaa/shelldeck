@@ -9,6 +9,7 @@ export function useDragReorder(onReorder: (fromIndex: number, toIndex: number) =
   const [dragging, setDragging] = useState<number | null>(null)
   const [dropTarget, setDropTarget] = useState<number | null>(null)
   const dropTargetRef = useRef<number | null>(null)
+  const rafRef = useRef<number | null>(null)
   const itemRefs = useRef(new Map<number, HTMLElement>())
 
   const findDropIndex = useCallback((clientY: number): number | null => {
@@ -24,16 +25,29 @@ export function useDragReorder(onReorder: (fromIndex: number, toIndex: number) =
     return closest?.index ?? null
   }, [])
 
+  /** A drop target adjacent to the dragged item is a no-op — hide the indicator. */
+  const isNoOp = useCallback(
+    (target: number | null) =>
+      dragging === null || target === null || target === dragging || target === dragging + 1,
+    [dragging]
+  )
+
   useEffect(() => {
     if (dragging === null) return
 
     const onPointerMove = (e: PointerEvent) => {
-      const target = findDropIndex(e.clientY)
-      dropTargetRef.current = target
-      setDropTarget(target)
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => {
+        const target = findDropIndex(e.clientY)
+        if (target !== dropTargetRef.current) {
+          dropTargetRef.current = target
+          setDropTarget(target)
+        }
+      })
     }
 
     const onPointerUp = () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       const dt = dropTargetRef.current
       if (dragging !== null && dt !== null) {
         const to = dt > dragging ? dt - 1 : dt
@@ -47,6 +61,7 @@ export function useDragReorder(onReorder: (fromIndex: number, toIndex: number) =
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerup', onPointerUp)
     return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
     }
@@ -59,5 +74,5 @@ export function useDragReorder(onReorder: (fromIndex: number, toIndex: number) =
     else itemRefs.current.delete(index)
   }, [])
 
-  return { dragging, dropTarget, startDrag, registerRef }
+  return { dragging, dropTarget, isNoOp, startDrag, registerRef }
 }

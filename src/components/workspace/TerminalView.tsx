@@ -8,9 +8,9 @@
  * Right-click shows a custom context menu.
  */
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect } from 'react'
 import { useTerminalManager } from '@/context/terminal-manager'
-import { ContextMenu, ContextMenuItem } from '@/components/ui/context-menu'
+import { Menu } from '@tauri-apps/api/menu'
 import '@xterm/xterm/css/xterm.css'
 
 interface TerminalViewProps {
@@ -21,7 +21,6 @@ interface TerminalViewProps {
 export function TerminalView({ sessionId, isVisible }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalManager = useTerminalManager()
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
   // Use a ref so effects don't re-run when the manager reference changes.
   const managerRef = useRef(terminalManager)
@@ -58,23 +57,18 @@ export function TerminalView({ sessionId, isVisible }: TerminalViewProps) {
     <div
       ref={containerRef}
       className="h-full w-full relative overflow-clip bg-background pl-3 pt-2"
-      onContextMenu={(e) => {
+      onContextMenu={async (e) => {
         e.preventDefault()
-        setContextMenu({ x: e.clientX, y: e.clientY })
+        const menu = await Menu.new({
+          items: [
+            {
+              text: 'Clear Terminal',
+              action: () => managerRef.current.clearTerminalScreen(sessionId)
+            }
+          ]
+        })
+        await menu.popup()
       }}
-    >
-      {contextMenu && (
-        <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)}>
-          <ContextMenuItem
-            onClick={() => {
-              managerRef.current.clearTerminalScreen(sessionId)
-              setContextMenu(null)
-            }}
-          >
-            Clear Terminal
-          </ContextMenuItem>
-        </ContextMenu>
-      )}
-    </div>
+    ></div>
   )
 }
