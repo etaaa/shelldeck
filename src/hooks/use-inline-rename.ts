@@ -52,5 +52,5 @@ export function useInlineRename(onCommit: (id: string, name: string) => void) {
     onClick: (e: MouseEvent) => e.stopPropagation()
   }
 
-  return { editingId, inputProps, start, commit, cancel }
+  return { editingId, inputProps, start }
 }

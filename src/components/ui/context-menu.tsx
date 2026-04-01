@@ -1,6 +1,6 @@
 /**
  * ContextMenu — reusable right-click context menu.
- * Auto-closes on any window click. Used by ProjectList and TerminalView.
+ * Auto-closes on any window click. Used by WorkspaceList and TerminalView.
  */
 
 import { useEffect, type ReactNode } from 'react'
@@ -15,9 +15,8 @@ interface ContextMenuProps {
 
 export function ContextMenu({ x, y, onClose, children }: ContextMenuProps) {
   useEffect(() => {
-    const close = () => onClose()
-    window.addEventListener('click', close)
-    return () => window.removeEventListener('click', close)
+    window.addEventListener('click', onClose)
+    return () => window.removeEventListener('click', onClose)
   }, [onClose])
 
   return (

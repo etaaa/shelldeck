@@ -8,6 +8,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 export function useDragReorder(onReorder: (fromIndex: number, toIndex: number) => void) {
   const [dragging, setDragging] = useState<number | null>(null)
   const [dropTarget, setDropTarget] = useState<number | null>(null)
+  const dropTargetRef = useRef<number | null>(null)
   const itemRefs = useRef(new Map<number, HTMLElement>())
 
   const findDropIndex = useCallback((clientY: number): number | null => {
@@ -27,16 +28,20 @@ export function useDragReorder(onReorder: (fromIndex: number, toIndex: number) =
     if (dragging === null) return
 
     const onPointerMove = (e: PointerEvent) => {
-      setDropTarget(findDropIndex(e.clientY))
+      const target = findDropIndex(e.clientY)
+      dropTargetRef.current = target
+      setDropTarget(target)
     }
 
     const onPointerUp = () => {
-      if (dragging !== null && dropTarget !== null) {
-        const to = dropTarget > dragging ? dropTarget - 1 : dropTarget
+      const dt = dropTargetRef.current
+      if (dragging !== null && dt !== null) {
+        const to = dt > dragging ? dt - 1 : dt
         if (to !== dragging) onReorder(dragging, to)
       }
       setDragging(null)
       setDropTarget(null)
+      dropTargetRef.current = null
     }
 
     window.addEventListener('pointermove', onPointerMove)
@@ -45,7 +50,7 @@ export function useDragReorder(onReorder: (fromIndex: number, toIndex: number) =
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
     }
-  }, [dragging, dropTarget, findDropIndex, onReorder])
+  }, [dragging, findDropIndex, onReorder])
 
   const startDrag = useCallback((index: number) => setDragging(index), [])
 

@@ -17,14 +17,14 @@ interface ResizeHandleProps {
 }
 
 export function ResizeHandle({ sidebarWidth, onResize, onResizeEnd }: ResizeHandleProps) {
-  const dragging = useRef(false)
+  const widthRef = useRef(sidebarWidth)
+  widthRef.current = sidebarWidth
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault()
-      dragging.current = true
       const startX = e.clientX
-      const startWidth = sidebarWidth
+      const startWidth = widthRef.current
 
       const onMouseMove = (ev: MouseEvent) => {
         const delta = ev.clientX - startX
@@ -34,7 +34,6 @@ export function ResizeHandle({ sidebarWidth, onResize, onResizeEnd }: ResizeHand
       }
 
       const onMouseUp = () => {
-        dragging.current = false
         document.removeEventListener('mousemove', onMouseMove)
         document.removeEventListener('mouseup', onMouseUp)
         document.body.style.cursor = ''
@@ -47,7 +46,7 @@ export function ResizeHandle({ sidebarWidth, onResize, onResizeEnd }: ResizeHand
       document.addEventListener('mousemove', onMouseMove)
       document.addEventListener('mouseup', onMouseUp)
     },
-    [sidebarWidth, onResize, onResizeEnd]
+    [onResize, onResizeEnd]
   )
 
   const handleDoubleClick = () => {

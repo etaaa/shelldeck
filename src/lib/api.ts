@@ -6,6 +6,7 @@
  */
 
 import { invoke } from '@tauri-apps/api/core'
+import { homeDir } from '@tauri-apps/api/path'
 import { open } from '@tauri-apps/plugin-dialog'
 import type { Workspace, TerminalSession, AppSettings } from '@/types'
 
@@ -147,6 +148,5 @@ export async function pathExists(path: string): Promise<boolean> {
 // --- Home directory ---
 
 export async function getHomeDir(): Promise<string> {
-  const { homeDir } = await import('@tauri-apps/api/path')
   return await homeDir()
 }

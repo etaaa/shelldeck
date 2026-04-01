@@ -13,6 +13,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
   type ReactNode
 } from 'react'
 import type { Workspace, TerminalSession } from '@/types'
@@ -151,8 +152,10 @@ function reducer(state: TerminalState, action: Action): TerminalState {
       return { ...state, bellSessionIds: next }
     }
 
-    default:
-      return state
+    default: {
+      const _exhaustive: never = action
+      return _exhaustive
+    }
   }
 }
 
@@ -163,8 +166,7 @@ interface TerminalContextValue {
   addWorkspace: (name: string, path: string) => void
   removeWorkspace: (workspaceId: string) => void
   reorderWorkspaces: (fromIndex: number, toIndex: number) => void
-  createSession: (workspaceId: string) => string
-  createQuickSession: () => string
+  createSession: (workspaceId: string | null) => string
   removeSession: (sessionId: string) => void
   setActiveTerminal: (sessionId: string | null) => void
   markSessionDead: (sessionId: string) => void
@@ -176,10 +178,9 @@ interface TerminalContextValue {
 
 const TerminalContext = createContext<TerminalContextValue | null>(null)
 
-let sessionCounter = 0
-
 export function TerminalProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
+  const sessionCounter = useRef(0)
   const { settings } = useSettings()
 
   // Load persisted workspaces and sessions on mount.
@@ -198,6 +199,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
       if (valid.length !== workspaces.length) {
         saveWorkspaces(valid)
       }
+      workspacesLoaded.current = true
 
       // Load saved sessions, filtering out any whose workspace no longer exists.
       const validIds = new Set(valid.map((w) => w.id))
@@ -212,7 +214,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
           const match = s.name.match(/^Terminal (\d+)$/)
           return match ? Math.max(max, parseInt(match[1], 10)) : max
         }, 0)
-        sessionCounter = maxNum
+        sessionCounter.current = maxNum
       }
       if (validSessions.length !== savedSessions.length) {
         saveSessions(validSessions)
@@ -221,13 +223,10 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  // Persist workspaces whenever they change (skip the initial empty state).
-  const isInitialWorkspaceMount = useRef(true)
+  // Persist workspaces whenever they change (skip until initial load completes).
+  const workspacesLoaded = useRef(false)
   useEffect(() => {
-    if (isInitialWorkspaceMount.current) {
-      isInitialWorkspaceMount.current = false
-      return
-    }
+    if (!workspacesLoaded.current) return
     saveWorkspaces(state.workspaces)
   }, [state.workspaces])
 
@@ -251,24 +250,12 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'REORDER_WORKSPACES', fromIndex, toIndex })
   }, [])
 
-  const createSession = useCallback((workspaceId: string): string => {
-    sessionCounter++
+  const createSession = useCallback((workspaceId: string | null): string => {
+    sessionCounter.current++
     const session: TerminalSession = {
-      id: `term-${Date.now()}-${sessionCounter}`,
+      id: `term-${Date.now()}-${sessionCounter.current}`,
       workspaceId,
-      name: `Terminal ${sessionCounter}`,
-      isRunning: true
-    }
-    dispatch({ type: 'ADD_SESSION', session })
-    return session.id
-  }, [])
-
-  const createQuickSession = useCallback((): string => {
-    sessionCounter++
-    const session: TerminalSession = {
-      id: `term-${Date.now()}-${sessionCounter}`,
-      workspaceId: null,
-      name: `Terminal ${sessionCounter}`,
+      name: `Terminal ${sessionCounter.current}`,
       isRunning: true
     }
     dispatch({ type: 'ADD_SESSION', session })
@@ -326,27 +313,38 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     [settings.bellNotificationsEnabled]
   )
 
-  return (
-    <TerminalContext.Provider
-      value={{
-        state,
-        addWorkspace,
-        removeWorkspace,
-        reorderWorkspaces,
-        createSession,
-        createQuickSession,
-        removeSession,
-        setActiveTerminal,
-        markSessionDead,
-        renameSession,
-        renameWorkspace,
-        reviveSession,
-        notifyBell
-      }}
-    >
-      {children}
-    </TerminalContext.Provider>
+  const value = useMemo(
+    () => ({
+      state,
+      addWorkspace,
+      removeWorkspace,
+      reorderWorkspaces,
+      createSession,
+      removeSession,
+      setActiveTerminal,
+      markSessionDead,
+      renameSession,
+      renameWorkspace,
+      reviveSession,
+      notifyBell
+    }),
+    [
+      state,
+      addWorkspace,
+      removeWorkspace,
+      reorderWorkspaces,
+      createSession,
+      removeSession,
+      setActiveTerminal,
+      markSessionDead,
+      renameSession,
+      renameWorkspace,
+      reviveSession,
+      notifyBell
+    ]
   )
+
+  return <TerminalContext.Provider value={value}>{children}</TerminalContext.Provider>
 }
 
 /** Hook to access terminal context. Throws if used outside the provider. */

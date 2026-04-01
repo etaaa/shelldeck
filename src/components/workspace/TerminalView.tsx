@@ -54,22 +54,14 @@ export function TerminalView({ sessionId, isVisible }: TerminalViewProps) {
     return () => observer.disconnect()
   }, [isVisible, sessionId])
 
-  // Right-click context menu.
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault()
-      setContextMenu({ x: e.clientX, y: e.clientY })
-    }
-    el.addEventListener('contextmenu', handleContextMenu)
-    return () => el.removeEventListener('contextmenu', handleContextMenu)
-  }, [])
-
   return (
     <div
       ref={containerRef}
       className="h-full w-full relative overflow-clip bg-background pl-3 pt-2"
+      onContextMenu={(e) => {
+        e.preventDefault()
+        setContextMenu({ x: e.clientX, y: e.clientY })
+      }}
     >
       {contextMenu && (
         <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)}>

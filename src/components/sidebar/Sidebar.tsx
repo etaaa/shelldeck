@@ -31,7 +31,7 @@ export function Sidebar({
   onCloseSettings,
   onSelectSettingsCategory
 }: SidebarProps) {
-  const { state, addWorkspace, createQuickSession } = useTerminalContext()
+  const { state, addWorkspace, createSession } = useTerminalContext()
   const terminalManager = useTerminalManager()
 
   const handleAddWorkspace = async () => {
@@ -44,7 +44,7 @@ export function Sidebar({
 
   const handleNewQuickTerminal = async () => {
     const home = await getHomeDir()
-    const sessionId = createQuickSession()
+    const sessionId = createSession(null)
     terminalManager.createTerminal(sessionId, home)
   }
 
@@ -54,29 +54,6 @@ export function Sidebar({
     <aside className="flex flex-col border-r border-border bg-card shrink-0" style={{ width }}>
       {/* Spacer for macOS traffic lights */}
       <div className="h-12 shrink-0" data-tauri-drag-region />
-
-      {/* Logo + name */}
-      <div className="flex items-center gap-2.5 px-4 pb-4">
-        <svg viewBox="0 0 512 512" className="w-7 h-7 shrink-0" fill="none">
-          <path
-            d="M 144 148 L 296 256 L 144 364"
-            stroke="currentColor"
-            strokeWidth="56"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <line
-            x1="328"
-            y1="364"
-            x2="400"
-            y2="364"
-            stroke="#34d399"
-            strokeWidth="56"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span className="text-base font-semibold text-foreground tracking-tight">shelldeck</span>
-      </div>
 
       {settingsOpen ? (
         <SettingsSidebar

@@ -16,8 +16,7 @@ import { useTerminalManager } from '@/context/terminal-manager'
 import { getHomeDir } from '@/lib/api'
 
 export function useKeyboardShortcuts() {
-  const { state, createSession, createQuickSession, removeSession, setActiveTerminal } =
-    useTerminalContext()
+  const { state, createSession, removeSession, setActiveTerminal } = useTerminalContext()
   const terminalManager = useTerminalManager()
 
   useEffect(() => {
@@ -30,7 +29,7 @@ export function useKeyboardShortcuts() {
       if (e.key === 't' && e.shiftKey) {
         e.preventDefault()
         getHomeDir().then((home) => {
-          const sessionId = createQuickSession()
+          const sessionId = createSession(null)
           terminalManager.createTerminal(sessionId, home)
         })
         return
@@ -49,7 +48,7 @@ export function useKeyboardShortcuts() {
           terminalManager.createTerminal(sessionId, workspace.path)
         } else {
           getHomeDir().then((home) => {
-            const sessionId = createQuickSession()
+            const sessionId = createSession(null)
             terminalManager.createTerminal(sessionId, home)
           })
         }
@@ -101,7 +100,6 @@ export function useKeyboardShortcuts() {
     state.activeTerminalId,
     state.workspaces,
     createSession,
-    createQuickSession,
     removeSession,
     setActiveTerminal,
     terminalManager

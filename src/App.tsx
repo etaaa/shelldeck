@@ -5,7 +5,7 @@
  * When settings is open, the workspace is replaced by the settings panel.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { Sidebar } from '@/components/sidebar/Sidebar'
 import { ResizeHandle } from '@/components/sidebar/ResizeHandle'
@@ -16,11 +16,9 @@ import { useSettings } from '@/context/settings-context'
 import { useAutoUpdate } from '@/hooks/use-auto-update'
 import type { SettingsCategory } from '@/types'
 
-const DEFAULT_SIDEBAR_WIDTH = 256
-
 export function App() {
   const { settings, updateSetting } = useSettings()
-  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
+  const [sidebarWidth, setSidebarWidth] = useState(settings.sidebarWidth)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsCategory, setSettingsCategory] = useState<SettingsCategory>('terminal')
 
@@ -32,20 +30,16 @@ export function App() {
     getCurrentWindow().show().catch(console.error)
   }, [])
 
-  // Sync sidebar width from settings on load.
+  // Sync sidebar width when settings load from disk.
   useEffect(() => {
-    const saved = settings.sidebarWidth
-    if (typeof saved === 'number' && saved >= 180 && saved <= 480) {
-      setSidebarWidth(saved)
-    }
+    setSidebarWidth(settings.sidebarWidth)
   }, [settings.sidebarWidth])
 
-  // Keep a ref so the resize-end callback always sees the latest width.
-  const sidebarWidthRef = useRef(sidebarWidth)
-  sidebarWidthRef.current = sidebarWidth
-
   const handleResizeEnd = useCallback(() => {
-    updateSetting('sidebarWidth', sidebarWidthRef.current)
+    setSidebarWidth((w) => {
+      updateSetting('sidebarWidth', w)
+      return w
+    })
   }, [updateSetting])
 
   return (

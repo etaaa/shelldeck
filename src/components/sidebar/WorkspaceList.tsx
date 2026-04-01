@@ -23,7 +23,7 @@ export function WorkspaceList() {
   const rename = useInlineRename(renameWorkspace)
   const drag = useDragReorder(reorderWorkspaces)
 
-  const [invalidPaths, setInvalidPaths] = useState<Set<string>>(new Set())
+  const [invalidWorkspaceIds, setInvalidWorkspaceIds] = useState<Set<string>>(new Set())
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [contextMenu, setContextMenu] = useState<{
     x: number
@@ -47,10 +47,10 @@ export function WorkspaceList() {
   const handleNewTerminal = async (workspaceId: string, workspacePath: string) => {
     const exists = await pathExists(workspacePath)
     if (!exists) {
-      setInvalidPaths((prev) => new Set(prev).add(workspaceId))
+      setInvalidWorkspaceIds((prev) => new Set(prev).add(workspaceId))
       return
     }
-    setInvalidPaths((prev) => {
+    setInvalidWorkspaceIds((prev) => {
       const next = new Set(prev)
       next.delete(workspaceId)
       return next
@@ -71,7 +71,7 @@ export function WorkspaceList() {
     <div className="space-y-0.5">
       {state.workspaces.map((workspace, index) => {
         const sessions = state.sessions.filter((s) => s.workspaceId === workspace.id)
-        const isInvalid = invalidPaths.has(workspace.id)
+        const isInvalid = invalidWorkspaceIds.has(workspace.id)
         const isCollapsed = collapsed.has(workspace.id)
         const isDragging = drag.dragging === index
         const showIndicatorBefore =
