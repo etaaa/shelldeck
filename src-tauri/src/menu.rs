@@ -1,11 +1,21 @@
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder},
-    App,
+    App, Emitter,
 };
 
 pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
     let check_for_updates =
         MenuItemBuilder::with_id("check_for_updates", "Check for Updates...").build(app)?;
+
+    let zoom_in = MenuItemBuilder::with_id("zoom_in", "Zoom In")
+        .accelerator("CmdOrCtrl+=")
+        .build(app)?;
+    let zoom_out = MenuItemBuilder::with_id("zoom_out", "Zoom Out")
+        .accelerator("CmdOrCtrl+-")
+        .build(app)?;
+    let zoom_reset = MenuItemBuilder::with_id("zoom_reset", "Actual Size")
+        .accelerator("CmdOrCtrl+0")
+        .build(app)?;
 
     let app_menu = SubmenuBuilder::new(app, "shelldeck")
         .about(None)
@@ -32,6 +42,10 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     let view_menu = SubmenuBuilder::new(app, "View")
+        .item(&zoom_in)
+        .item(&zoom_out)
+        .item(&zoom_reset)
+        .separator()
         .item(&PredefinedMenuItem::fullscreen(app, None)?)
         .build()?;
 
@@ -50,6 +64,12 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
     app.on_menu_event(move |app_handle, event| {
         if event.id() == check_for_updates.id() {
             check_for_updates_handler(app_handle.clone());
+        } else if event.id() == zoom_in.id() {
+            let _ = app_handle.emit("zoom", "in");
+        } else if event.id() == zoom_out.id() {
+            let _ = app_handle.emit("zoom", "out");
+        } else if event.id() == zoom_reset.id() {
+            let _ = app_handle.emit("zoom", "reset");
         }
     });
 

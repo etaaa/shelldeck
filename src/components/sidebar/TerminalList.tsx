@@ -9,7 +9,7 @@ import { useTerminalManager } from '@/context/terminal-manager'
 import { useInlineRename } from '@/hooks/use-inline-rename'
 import type { TerminalSession } from '@/types'
 import { cn } from '@/lib/utils'
-import { Terminal, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface TerminalListProps {
   sessions: TerminalSession[]
@@ -39,7 +39,7 @@ export function TerminalList({ sessions }: TerminalListProps) {
           <div
             key={session.id}
             className={cn(
-              'flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group text-sm transition-colors',
+              'flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group text-sm font-medium transition-colors',
               isActive
                 ? 'bg-accent text-foreground'
                 : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
@@ -50,8 +50,15 @@ export function TerminalList({ sessions }: TerminalListProps) {
             onClick={() => setActiveTerminal(session.id)}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <Terminal
-                className={cn('h-3.5 w-3.5 shrink-0', session.isRunning ? 'text-green-500' : '')}
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full shrink-0',
+                  hasBell
+                    ? 'bg-yellow-500'
+                    : session.isRunning
+                      ? 'bg-green-500'
+                      : 'bg-muted-foreground/40'
+                )}
               />
 
               {isEditing ? (
@@ -70,7 +77,6 @@ export function TerminalList({ sessions }: TerminalListProps) {
                   >
                     {session.name}
                   </span>
-                  {hasBell && <span className="h-1.5 w-1.5 rounded-full bg-yellow-500 shrink-0" />}
                 </>
               )}
             </div>

@@ -21,7 +21,8 @@ export const defaultSettings: AppSettings = {
   sidebarWidth: 256,
   bellNotificationsEnabled: true,
   fontSize: 13,
-  scrollback: 1000
+  scrollback: 1000,
+  zoomLevel: 1.0
 }
 
 interface SettingsContextValue {

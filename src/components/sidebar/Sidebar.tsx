@@ -64,12 +64,10 @@ export function Sidebar({
       ) : (
         <>
           {/* Workspaces heading + add button */}
-          <div className="flex items-center justify-between px-3 pb-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Workspaces
-            </span>
+          <div className="flex items-center justify-between px-4 pb-1.5">
+            <span className="text-xs font-medium text-muted-foreground">Workspaces</span>
             <button
-              className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="h-5 w-5 flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               onClick={handleAddWorkspace}
               title="Add Workspace"
             >
@@ -88,12 +86,10 @@ export function Sidebar({
                 <WorkspaceList />
 
                 {/* Quick Terminals */}
-                <div className="flex items-center justify-between px-1 pt-3 pb-1">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Quick Terminals
-                  </span>
+                <div className="flex items-center justify-between px-2 pt-4 pb-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">Quick Terminals</span>
                   <button
-                    className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    className="h-5 w-5 flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                     onClick={handleNewQuickTerminal}
                     title="New Quick Terminal"
                   >
@@ -106,9 +102,9 @@ export function Sidebar({
           </div>
 
           {/* Settings button at bottom */}
-          <div className="border-t border-border px-3 py-2">
+          <div className="border-t border-border p-2">
             <button
-              className="flex items-center gap-2 px-2.5 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors w-full"
+              className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors w-full"
               onClick={onOpenSettings}
             >
               <Settings className="h-4 w-4" />

@@ -23,6 +23,7 @@ export interface AppSettings {
   bellNotificationsEnabled: boolean
   fontSize: number
   scrollback: number
+  zoomLevel: number
 }
 
 /** Settings panel categories. */

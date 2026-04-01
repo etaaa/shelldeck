@@ -11,7 +11,7 @@ import { useInlineRename } from '@/hooks/use-inline-rename'
 import { useDragReorder } from '@/hooks/use-drag-reorder'
 import { TerminalList } from './TerminalList'
 import { ContextMenu, ContextMenuItem, ContextMenuSeparator } from '@/components/ui/context-menu'
-import { Plus, Folder, AlertTriangle, ChevronRight } from 'lucide-react'
+import { Plus, AlertTriangle, ChevronRight } from 'lucide-react'
 import { pathExists } from '@/lib/api'
 import { confirm } from '@tauri-apps/plugin-dialog'
 import { open } from '@tauri-apps/plugin-shell'
@@ -86,7 +86,7 @@ export function WorkspaceList() {
 
             {/* Workspace header */}
             <div
-              className={`flex items-center justify-between px-2 py-1.5 rounded-md group hover:bg-accent transition-colors cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-40' : ''}`}
+              className={`flex items-center justify-between px-2 py-1.5 rounded-md group hover:bg-accent/60 transition-colors cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-40' : ''}`}
               onPointerDown={(e) => {
                 if (e.button !== 0 || (e.target as HTMLElement).closest('button, input')) return
                 if (rename.editingId) return
@@ -107,7 +107,6 @@ export function WorkspaceList() {
                     className={`h-3.5 w-3.5 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
                   />
                 </button>
-                <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
                 {isEditing ? (
                   <input
                     {...rename.inputProps}
@@ -115,7 +114,7 @@ export function WorkspaceList() {
                   />
                 ) : (
                   <span
-                    className="text-sm text-foreground truncate"
+                    className="text-sm font-medium text-foreground truncate"
                     onDoubleClick={() => rename.start(workspace.id, workspace.name)}
                   >
                     {workspace.name}

@@ -13,6 +13,7 @@
     "window-state:default",
     "notification:default",
     "updater:default",
-    "process:default"
+    "process:default",
+    "core:webview:allow-set-webview-zoom"
   ]
 }

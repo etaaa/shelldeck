@@ -14,6 +14,7 @@ import { Settings } from '@/components/settings/Settings'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 import { useSettings } from '@/context/settings-context'
 import { useAutoUpdate } from '@/hooks/use-auto-update'
+import { useZoom } from '@/hooks/use-zoom'
 import type { SettingsCategory } from '@/types'
 
 export function App() {
@@ -24,6 +25,7 @@ export function App() {
 
   useKeyboardShortcuts()
   useAutoUpdate()
+  useZoom()
 
   // Show the window after the first paint.
   useEffect(() => {
