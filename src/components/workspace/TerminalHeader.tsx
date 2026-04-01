@@ -1,48 +1,25 @@
 /**
- * TerminalHeader — displays the terminal name, status, and restart button
- * above the active terminal view.
+ * TerminalHeader — displays the terminal name above the active terminal view.
  */
 
-import { useTerminalContext } from '@/context/terminal-context'
 import { useTerminalManager } from '@/context/terminal-manager'
-import { getHomeDir } from '@/lib/api'
 import type { TerminalSession } from '@/types'
-import { RotateCcw } from 'lucide-react'
 
 interface TerminalHeaderProps {
   session: TerminalSession
-  workspacePath: string | null
 }
 
-export function TerminalHeader({ session, workspacePath }: TerminalHeaderProps) {
-  const { reviveSession } = useTerminalContext()
+export function TerminalHeader({ session }: TerminalHeaderProps) {
   const terminalManager = useTerminalManager()
-
-  const handleRestart = async () => {
-    const cwd = workspacePath ?? (await getHomeDir())
-    reviveSession(session.id)
-    terminalManager.restartTerminal(session.id, cwd)
-  }
 
   return (
     <div
-      className="flex items-center justify-between px-4 h-12 border-b border-border bg-card shrink-0"
+      className="flex items-center px-4 h-12 border-b border-border bg-card shrink-0"
       data-tauri-drag-region
     >
-      <div className="flex items-center min-w-0 pointer-events-none">
-        <span className="text-sm font-medium text-foreground truncate">
-          {terminalManager.terminalTitles[session.id] || session.name}
-        </span>
-      </div>
-
-      <button
-        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-colors"
-        onClick={handleRestart}
-        title="Restart Terminal"
-      >
-        <RotateCcw className="h-3.5 w-3.5" />
-        Restart
-      </button>
+      <span className="text-sm font-medium text-foreground truncate pointer-events-none">
+        {terminalManager.terminalTitles[session.id] || session.name}
+      </span>
     </div>
   )
 }

@@ -20,9 +20,6 @@ export function Workspace() {
   const terminalManager = useTerminalManager()
   const [searchOpen, setSearchOpen] = useState(false)
   const activeSession = state.sessions.find((s) => s.id === state.activeTerminalId)
-  const activeWorkspace = activeSession?.workspaceId
-    ? state.workspaces.find((w) => w.id === activeSession.workspaceId)
-    : null
 
   // Cmd+F toggles the search bar.
   useEffect(() => {
@@ -70,9 +67,7 @@ export function Workspace() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-background">
-      {activeSession && (
-        <TerminalHeader session={activeSession} workspacePath={activeWorkspace?.path ?? null} />
-      )}
+      {activeSession && <TerminalHeader session={activeSession} />}
 
       {searchOpen && state.activeTerminalId && (
         <SearchBar sessionId={state.activeTerminalId} onClose={() => setSearchOpen(false)} />
